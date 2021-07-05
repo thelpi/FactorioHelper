@@ -6,6 +6,9 @@ namespace FactorioHelper
 {
     class ProductionService
     {
+        private const int EachSciencePackItemId = 0;
+        private static readonly int[] SciencePackIdList = new[] { 1, 7, 12, 21, 28, 33 };
+
         private readonly IDataProvider _dataProvider;
 
         public FurnaceType _furnaceType { get; set; }
@@ -31,7 +34,7 @@ namespace FactorioHelper
 
                 var item = itemsToProduce[i];
 
-                var itemTargetPerSec = item.Id == itemId
+                var itemTargetPerSec = (item.Id == itemId || (itemId == EachSciencePackItemId && SciencePackIdList.Contains(item.Id)))
                     ? targetPerSec
                     : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
 
@@ -44,24 +47,34 @@ namespace FactorioHelper
             return itemsResult;
         }
 
-        internal IReadOnlyCollection<BaseItem> GetBaseItemsList()
+        internal IReadOnlyCollection<BaseItem> GetBaseItemsList(bool withEachSciencePackItem)
         {
-            return _dataProvider
+            var items = _dataProvider
                 .GetDatas(
                     "SELECT id, name FROM item",
                     _ => new BaseItem
                     {
                         Id = _.Get<int>("id"),
                         Name = _.Get<string>("name")
-                    });
+                    }).ToList();
+
+            if (withEachSciencePackItem)
+            {
+                items.Insert(0, new BaseItem { Id = EachSciencePackItemId, Name = "Each science pack" });
+            }
+
+            return items;
         }
 
         private List<Item> GetFullListOfItemsToProduce(int itemId)
         {
             var itemsToProduce = new List<Item>();
 
-            var item = GetItemById(itemId);
-            itemsToProduce.Add(item);
+            if (itemId == EachSciencePackItemId)
+                itemsToProduce.AddRange(SciencePackIdList.Select(_ => GetItemById(_)));
+            else
+                itemsToProduce.Add(GetItemById(itemId));
+
             var currentItemIndex = 0;
 
             while (currentItemIndex < itemsToProduce.Count)

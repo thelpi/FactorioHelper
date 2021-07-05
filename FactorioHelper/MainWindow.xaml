@@ -4,9 +4,72 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FactorioHelper"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+        mc:Ignorable="d" WindowStartupLocation="CenterScreen"
+        ResizeMode="CanMinimize"
+        Title="MainWindow" SizeToContent="WidthAndHeight">
+    <Window.Resources>
+        <local:ItemIdImageConverter x:Key="itemIdImageConverter" />
+    </Window.Resources>
+    <DockPanel Margin="10">
+        <StackPanel DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Targeted item:" Width="100" VerticalAlignment="Center" />
+                <ComboBox VerticalContentAlignment="Center" Height="40" Width="250" Name="ItemsComboBox">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Width="30" Height="30" Source="{Binding Path=Id, Converter={StaticResource itemIdImageConverter}}" />
+                                <Label Margin="5, 0, 0, 0" Content="{Binding Path=Name}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
+                <Label Content="Target p/ sec:" Width="100" />
+                <TextBox Width="250" VerticalContentAlignment="Center" Name="TargetPerSecText" />
+            </StackPanel>
+            <StackPanel Margin="0, 15, 0, 0" Orientation="Horizontal">
+                <Label Content="Furnace type:" Width="100" />
+                <ComboBox Width="250" Name="FurnaceTypeComboBox" />
+            </StackPanel>
+            <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
+                <Label Content="Mining drill type:" Width="100" />
+                <ComboBox Width="250" Name="MiningDrillTypeComboBox" />
+            </StackPanel>
+            <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
+                <Label Content="Mining bonus:" Width="100" />
+                <ComboBox Width="250" Name="MiningBonusComboBox">
+                    <ComboBoxItem>0</ComboBoxItem>
+                    <ComboBoxItem>1</ComboBoxItem>
+                    <ComboBoxItem>2</ComboBoxItem>
+                    <ComboBoxItem>3</ComboBoxItem>
+                    <ComboBoxItem>4</ComboBoxItem>
+                    <ComboBoxItem>5</ComboBoxItem>
+                    <ComboBoxItem>6</ComboBoxItem>
+                    <ComboBoxItem>7</ComboBoxItem>
+                    <ComboBoxItem>8</ComboBoxItem>
+                    <ComboBoxItem>9</ComboBoxItem>
+                </ComboBox>
+            </StackPanel>
+            <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
+                <Label Content="Assembling type:" Width="100" />
+                <ComboBox Width="250" Name="AssemblingTypeComboBox" />
+            </StackPanel>
+            <Button Margin="0, 25, 0, 0" Content="Compute requirements" Name="CalculateButton" Click="CalculateButton_Click" />
+        </StackPanel>
+        <ScrollViewer Name="ResultsScrollViewer" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+            <ListBox Name="ResultsListBox">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Width="30" Height="30" Source="{Binding Path=Key.Id, Converter={StaticResource itemIdImageConverter}}" />
+                            <Label Width="200" Content="{Binding Path=Key.Name}" VerticalAlignment="Center" />
+                            <Label Width="50" VerticalAlignment="Center" Content="{Binding Path=Value}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </ScrollViewer>
+    </DockPanel>
 </Window>

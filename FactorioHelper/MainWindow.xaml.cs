@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Windows;
 
 namespace FactorioHelper
@@ -33,133 +32,39 @@ namespace FactorioHelper
 
         private void CalculateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (MiningDrillTypeComboBox.SelectedIndex < 0
-                || FurnaceTypeComboBox.SelectedIndex < 0
-                || AssemblingTypeComboBox.SelectedIndex < 0
-                || ItemsComboBox.SelectedIndex < 0
-                || MiningBonusComboBox.SelectedIndex < 0
-                || !decimal.TryParse(
-                    TargetPerSecText.Text,
-                    NumberStyles.AllowDecimalPoint,
-                    CultureInfo.InvariantCulture,
-                    out decimal targetPerSec)
-                || targetPerSec <= 0)
+            if (!CheckFormInput(out decimal targetPerSec))
             {
                 MessageBox.Show("All fields are mandatory.", "FactorioHelper", MessageBoxButton.OK);
                 return;
             }
 
             var itemId = (ItemsComboBox.SelectedItem as BaseItem).Id;
-            var furnaceType = (FurnaceType)FurnaceTypeComboBox.SelectedItem;
-            var miningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
-            var miningBonus = MiningBonusComboBox.SelectedIndex;
-            var assemblingType = (AssemblingType)AssemblingTypeComboBox.SelectedItem;
 
-            var itemsToProduce = GetFullListOfItemsToProduce(itemId);
+            var productionService = new ProductionService(
+                _dataProvider,
+                (FurnaceType)FurnaceTypeComboBox.SelectedItem,
+                (MiningDrillType)MiningDrillTypeComboBox.SelectedItem,
+                MiningBonusComboBox.SelectedIndex,
+                (AssemblingType)AssemblingTypeComboBox.SelectedItem);
 
-            var itemsResult = new Dictionary<BaseItem, int>();
-
-            var i = 0;
-            while (i < itemsToProduce.Count)
-            {
-                CheckSuitableItem(itemsToProduce, itemsResult, i);
-
-                var item = itemsToProduce[i];
-
-                var itemTargetPerSec = item.Id == itemId
-                    ? targetPerSec
-                    : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
-
-                var requirements = item.GetProductionUnitRequirements(
-                    itemTargetPerSec, furnaceType, miningDrillType, miningBonus, assemblingType);
-
-                itemsResult.Add(item, (int)Math.Ceiling(requirements));
-                i++;
-            }
-
-            ResultsListBox.ItemsSource = itemsResult;
+            ResultsListBox.ItemsSource = productionService.GetItemsToProduce(targetPerSec, itemId);
             ResultsScrollViewer.Visibility = Visibility.Visible;
         }
 
-        private static decimal GetItemPerSecFromParents(
-            List<Item> itemsToProduce,
-            Dictionary<BaseItem, int> itemsResult,
-            Item item)
+        private bool CheckFormInput(out decimal targetPerSec)
         {
-            return itemsToProduce
-                .Where(_ => _.Composition.ContainsKey(item.Id))
-                .Sum(_ => (_.Composition[item.Id] * itemsResult[_]) / _.BuildTime);
-        }
-
-        private static void CheckSuitableItem(
-            List<Item> itemsToProduce,
-            Dictionary<BaseItem, int>
-            itemsResult, int i)
-        {
-            var currentItemIsSuitable = false;
-            while (!currentItemIsSuitable)
-            {
-                var it = itemsToProduce[i];
-                var parentItems = itemsToProduce.Where(_ => _.Composition.ContainsKey(it.Id)).ToList();
-                if (parentItems.Count > 0 && !parentItems.All(_ => itemsResult.ContainsKey(_)))
-                {
-                    itemsToProduce.Add(it);
-                    itemsToProduce.RemoveAt(i);
-                }
-                else
-                {
-                    currentItemIsSuitable = true;
-                }
-            }
-        }
-
-        private List<Item> GetFullListOfItemsToProduce(int itemId)
-        {
-            var itemsToProduce = new List<Item>();
-
-            var item = GetItemById(itemId);
-            itemsToProduce.Add(item);
-            var currentItemIndex = 0;
-
-            while (currentItemIndex < itemsToProduce.Count)
-            {
-                foreach (var subItemId in itemsToProduce[currentItemIndex].Composition.Keys)
-                {
-                    if (!itemsToProduce.Any(_ => _.Id == subItemId))
-                    {
-                        var subItem = GetItemById(subItemId);
-                        itemsToProduce.Add(subItem);
-                    }
-                }
-                currentItemIndex++;
-            }
-
-            return itemsToProduce;
-        }
-
-        private Item GetItemById(int itemId)
-        {
-            var item = _dataProvider
-                .GetData(
-                    $"SELECT id, name, build_time, build_result, build_type_id FROM item WHERE id = {itemId}",
-                    _ => new Item
-                    {
-                        BuildResult = _.Get<int>("build_result"),
-                        BuildTime = _.Get<decimal>("build_time"),
-                        BuildType = (ItemBuildType)_.Get<int>("build_type_id"),
-                        Id = _.Get<int>("id"),
-                        Name = _.Get<string>("name")
-                    });
-
-            item.Composition = _dataProvider
-                .GetDatas(
-                    $"SELECT source_item_id, quantity FROM component WHERE target_item_id = {itemId}",
-                    _ => new KeyValuePair<int, decimal>(
-                        _.Get<int>("source_item_id"),
-                        _.Get<decimal>("quantity")))
-                .ToDictionary(_ => _.Key, _ => _.Value);
-
-            return item;
+            targetPerSec = 0;
+            return MiningDrillTypeComboBox.SelectedIndex >= 0
+                && FurnaceTypeComboBox.SelectedIndex >= 0
+                && AssemblingTypeComboBox.SelectedIndex >= 0
+                && ItemsComboBox.SelectedIndex >= 0
+                && MiningBonusComboBox.SelectedIndex >= 0
+                && decimal.TryParse(
+                    TargetPerSecText.Text,
+                    NumberStyles.AllowDecimalPoint,
+                    CultureInfo.InvariantCulture,
+                    out targetPerSec)
+                && targetPerSec > 0;
         }
 
         private IReadOnlyCollection<BaseItem> GetBaseItemsList()
@@ -220,33 +125,6 @@ namespace FactorioHelper
         public int BuildResult { get; set; }
         public ItemBuildType BuildType { get; set; }
         public IReadOnlyDictionary<int, decimal> Composition { get; set; }
-
-        public decimal GetProductionUnitRequirements(
-            decimal targetPerSec,
-            FurnaceType furnaceType,
-            MiningDrillType miningDrillType,
-            int miningBonus, AssemblingType assemblingType)
-        {
-            decimal productionUnitRequirements = (targetPerSec * BuildTime) / BuildResult;
-
-            switch (BuildType)
-            {
-                case ItemBuildType.AssemblingMachine:
-                    productionUnitRequirements *= assemblingType.GetRate();
-                    break;
-                case ItemBuildType.ChemicalPlant:
-                    productionUnitRequirements *= 1; // nothing more
-                    break;
-                case ItemBuildType.Furnace:
-                    productionUnitRequirements /= furnaceType.GetRate();
-                    break;
-                case ItemBuildType.MiningDrill:
-                    productionUnitRequirements *= miningDrillType.GetRate(miningBonus);
-                    break;
-            }
-
-            return productionUnitRequirements;
-        }
     }
 
     static class EnumExtensions

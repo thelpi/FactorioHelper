@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:FactorioHelper"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"
         ResizeMode="CanMinimize"
-        Title="MainWindow" SizeToContent="WidthAndHeight">
+        Title="MainWindow" Height="320" SizeToContent="Width">
     <Window.Resources>
         <local:ItemIdImageConverter x:Key="itemIdImageConverter" />
     </Window.Resources>

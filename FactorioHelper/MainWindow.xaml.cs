@@ -105,7 +105,8 @@ namespace FactorioHelper
         AssemblingMachine = 1,
         ChemicalPlant,
         Furnace,
-        MiningDrill
+        MiningDrill,
+        Refining
     }
 
     class BaseItem

@@ -44,8 +44,11 @@ namespace FactorioHelper
                 case ItemBuildType.MiningDrill:
                     buildTime /= _miningDrillType.GetRate(_miningBonus);
                     break;
+                case ItemBuildType.Refining:
+                    // TODO !
+                    break;
             }
-            return buildTime / item.BuildResult;
+            return buildTime;
         }
 
         private List<Item> GetFullListOfItemsToProduce(int itemId)
@@ -146,7 +149,7 @@ namespace FactorioHelper
                     ? targetPerSec
                     : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
 
-                var requirements = targetPerSec * GetRealBuildTime(item);
+                var requirements = itemTargetPerSec * (GetRealBuildTime(item) / item.BuildResult);
 
                 itemsResult.Add(item, (int)Math.Ceiling(requirements));
                 i++;

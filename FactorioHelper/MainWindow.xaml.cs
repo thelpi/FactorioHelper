@@ -126,6 +126,28 @@ namespace FactorioHelper
         public int BuildResult { get; set; }
         public ItemBuildType BuildType { get; set; }
         public IReadOnlyDictionary<int, decimal> Composition { get; set; }
+
+        public decimal GetRealBuildTime(
+            AssemblingType assemblingType,
+            FurnaceType furnaceType,
+            MiningDrillType miningDrillType,
+            int miningBonus)
+        {
+            var buildTime = BuildTime;
+            switch (BuildType)
+            {
+                case ItemBuildType.AssemblingMachine:
+                    buildTime /= assemblingType.GetRate();
+                    break;
+                case ItemBuildType.Furnace:
+                    buildTime /= furnaceType.GetRate();
+                    break;
+                case ItemBuildType.MiningDrill:
+                    buildTime /= miningDrillType.GetRate(miningBonus);
+                    break;
+            }
+            return buildTime;
+        }
     }
 
     static class EnumExtensions

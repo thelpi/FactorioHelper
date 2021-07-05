@@ -29,26 +29,7 @@ namespace FactorioHelper
 
         private decimal GetRealBuildTime(Item item)
         {
-            var buildTime = item.BuildTime;
-            switch (item.BuildType)
-            {
-                case ItemBuildType.AssemblingMachine:
-                    buildTime /= _assemblingType.GetRate();
-                    break;
-                case ItemBuildType.ChemicalPlant:
-                    buildTime *= 1; // nothing more
-                    break;
-                case ItemBuildType.Furnace:
-                    buildTime /= _furnaceType.GetRate();
-                    break;
-                case ItemBuildType.MiningDrill:
-                    buildTime /= _miningDrillType.GetRate(_miningBonus);
-                    break;
-                case ItemBuildType.Refining:
-                    // TODO !
-                    break;
-            }
-            return buildTime;
+            return item.GetRealBuildTime(_assemblingType, _furnaceType, _miningDrillType, _miningBonus);
         }
 
         private List<Item> GetFullListOfItemsToProduce(int itemId)

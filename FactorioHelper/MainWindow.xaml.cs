@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 
@@ -10,18 +9,23 @@ namespace FactorioHelper
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly IDataProvider _dataProvider;
+        private readonly ProductionService _productionService;
 
         private Properties.Settings Settings => Properties.Settings.Default;
 
         public MainWindow()
         {
             InitializeComponent();
-            _dataProvider = new MySqlDataProvider(Settings.sqlServer, Settings.sqlDatabase, Settings.sqlUid, Settings.sqlPwd);
+            _productionService = new ProductionService(
+                new MySqlDataProvider(
+                    Settings.sqlServer,
+                    Settings.sqlDatabase,
+                    Settings.sqlUid,
+                    Settings.sqlPwd));
             MiningDrillTypeComboBox.ItemsSource = Enum.GetValues(typeof(MiningDrillType));
             FurnaceTypeComboBox.ItemsSource = Enum.GetValues(typeof(FurnaceType));
             AssemblingTypeComboBox.ItemsSource = Enum.GetValues(typeof(AssemblingType));
-            ItemsComboBox.ItemsSource = GetBaseItemsList();
+            ItemsComboBox.ItemsSource = _productionService.GetBaseItemsList();
 
             // arbitrary default values
             MiningDrillTypeComboBox.SelectedIndex = 1;
@@ -40,14 +44,12 @@ namespace FactorioHelper
 
             var itemId = (ItemsComboBox.SelectedItem as BaseItem).Id;
 
-            var productionService = new ProductionService(
-                _dataProvider,
-                (FurnaceType)FurnaceTypeComboBox.SelectedItem,
-                (MiningDrillType)MiningDrillTypeComboBox.SelectedItem,
-                MiningBonusComboBox.SelectedIndex,
-                (AssemblingType)AssemblingTypeComboBox.SelectedItem);
+            _productionService._assemblingType = (AssemblingType)AssemblingTypeComboBox.SelectedItem;
+            _productionService._furnaceType = (FurnaceType)FurnaceTypeComboBox.SelectedItem;
+            _productionService._miningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
+            _productionService._miningBonus = MiningBonusComboBox.SelectedIndex;
 
-            ResultsListBox.ItemsSource = productionService.GetItemsToProduce(targetPerSec, itemId);
+            ResultsListBox.ItemsSource = _productionService.GetItemsToProduce(targetPerSec, itemId);
             ResultsScrollViewer.Visibility = Visibility.Visible;
         }
 
@@ -65,122 +67,6 @@ namespace FactorioHelper
                     CultureInfo.InvariantCulture,
                     out targetPerSec)
                 && targetPerSec > 0;
-        }
-
-        private IReadOnlyCollection<BaseItem> GetBaseItemsList()
-        {
-            return _dataProvider
-                .GetDatas(
-                    "SELECT id, name FROM item",
-                    _ => new BaseItem
-                    {
-                        Id = _.Get<int>("id"),
-                        Name = _.Get<string>("name")
-                    });
-        }
-    }
-
-    enum MiningDrillType
-    {
-        Burner,
-        Electric
-    }
-
-    enum FurnaceType
-    {
-        Stone,
-        Steel,
-        Electric
-    }
-
-    enum AssemblingType
-    {
-        Machine1,
-        Machine2,
-        Machine3
-    }
-
-    enum ItemBuildType
-    {
-        AssemblingMachine = 1,
-        ChemicalPlant,
-        Furnace,
-        MiningDrill,
-        Refining
-    }
-
-    class BaseItem
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-
-        public override string ToString()
-        {
-            return $"{Id} - {Name}";
-        }
-    }
-
-    class Item : BaseItem
-    {
-        public decimal BuildTime { get; set; }
-        public int BuildResult { get; set; }
-        public ItemBuildType BuildType { get; set; }
-        public IReadOnlyDictionary<int, decimal> Composition { get; set; }
-
-        public decimal GetRealBuildTime(
-            AssemblingType assemblingType,
-            FurnaceType furnaceType,
-            MiningDrillType miningDrillType,
-            int miningBonus)
-        {
-            var buildTime = BuildTime;
-            switch (BuildType)
-            {
-                case ItemBuildType.AssemblingMachine:
-                    buildTime /= assemblingType.GetRate();
-                    break;
-                case ItemBuildType.Furnace:
-                    buildTime /= furnaceType.GetRate();
-                    break;
-                case ItemBuildType.MiningDrill:
-                    buildTime /= miningDrillType.GetRate(miningBonus);
-                    break;
-            }
-            return buildTime;
-        }
-    }
-
-    static class EnumExtensions
-    {
-        public static decimal GetRate(this FurnaceType furnaceType)
-        {
-            switch (furnaceType)
-            {
-                case FurnaceType.Electric:
-                case FurnaceType.Steel:
-                    return 2;
-                default: // stone
-                    return 1;
-            }
-        }
-
-        public static decimal GetRate(this MiningDrillType miningDrillType, int bonus)
-        {
-            var baseRate = miningDrillType == MiningDrillType.Burner ? 0.25M : 0.5M;
-            return baseRate + (baseRate * bonus * 0.1M);
-        }
-
-        public static decimal GetRate(this AssemblingType assemblingType)
-        {
-            switch (assemblingType)
-            {
-                case AssemblingType.Machine3:
-                    return 1.25M;
-                case AssemblingType.Machine2:
-                    return 0.75M;
-                default: // machine 1
-                    return 0.5M;
-            }
         }
     }
 }

@@ -65,6 +65,8 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Enums.cs" />
+    <Compile Include="Item.cs" />
     <Compile Include="ItemIdImageConverter.cs" />
     <Compile Include="MySqlDataProvider.cs" />
     <Compile Include="IDataProvider.cs" />

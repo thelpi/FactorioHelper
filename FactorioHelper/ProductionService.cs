@@ -8,28 +8,52 @@ namespace FactorioHelper
     {
         private readonly IDataProvider _dataProvider;
 
-        private readonly FurnaceType _furnaceType;
-        private readonly MiningDrillType _miningDrillType;
-        private readonly int _miningBonus;
-        private readonly AssemblingType _assemblingType;
+        public FurnaceType _furnaceType { get; set; }
+        public MiningDrillType _miningDrillType { get; set; }
+        public int _miningBonus { get; set; }
+        public AssemblingType _assemblingType { get; set; }
 
-        internal ProductionService(
-            IDataProvider dataProvider,
-            FurnaceType furnaceType,
-            MiningDrillType miningDrillType,
-            int miningBonus,
-            AssemblingType assemblingType)
+        internal ProductionService(IDataProvider dataProvider)
         {
             _dataProvider = dataProvider;
-            _furnaceType = furnaceType;
-            _miningDrillType = miningDrillType;
-            _miningBonus = miningBonus;
-            _assemblingType = assemblingType;
         }
 
-        private decimal GetRealBuildTime(Item item)
+        internal Dictionary<BaseItem, int> GetItemsToProduce(decimal targetPerSec, int itemId)
         {
-            return item.GetRealBuildTime(_assemblingType, _furnaceType, _miningDrillType, _miningBonus);
+            var itemsToProduce = GetFullListOfItemsToProduce(itemId);
+
+            var itemsResult = new Dictionary<BaseItem, int>();
+
+            var i = 0;
+            while (i < itemsToProduce.Count)
+            {
+                CheckSuitableItem(itemsToProduce, itemsResult, i);
+
+                var item = itemsToProduce[i];
+
+                var itemTargetPerSec = item.Id == itemId
+                    ? targetPerSec
+                    : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
+
+                var requirements = itemTargetPerSec * (item.GetRealBuildTime(this) / item.BuildResult);
+
+                itemsResult.Add(item, (int)Math.Ceiling(requirements));
+                i++;
+            }
+
+            return itemsResult;
+        }
+
+        internal IReadOnlyCollection<BaseItem> GetBaseItemsList()
+        {
+            return _dataProvider
+                .GetDatas(
+                    "SELECT id, name FROM item",
+                    _ => new BaseItem
+                    {
+                        Id = _.Get<int>("id"),
+                        Name = _.Get<string>("name")
+                    });
         }
 
         private List<Item> GetFullListOfItemsToProduce(int itemId)
@@ -61,13 +85,31 @@ namespace FactorioHelper
             var item = _dataProvider
                 .GetData(
                     $"SELECT id, name, build_time, build_result, build_type_id FROM item WHERE id = {itemId}",
-                    _ => new Item
+                    _ =>
                     {
-                        BuildResult = _.Get<int>("build_result"),
-                        BuildTime = _.Get<decimal>("build_time"),
-                        BuildType = (ItemBuildType)_.Get<int>("build_type_id"),
-                        Id = _.Get<int>("id"),
-                        Name = _.Get<string>("name")
+                        Item localItem = null;
+
+                        switch ((ItemBuildType)_.Get<int>("build_type_id"))
+                        {
+                            case ItemBuildType.AssemblingMachine:
+                                localItem = new AssemblingItem();
+                                break;
+                            case ItemBuildType.Furnace:
+                                localItem = new FurnaceItem();
+                                break;
+                            case ItemBuildType.MiningDrill:
+                                localItem = new MiningItem();
+                                break;
+                            default:
+                                localItem = new Item();
+                                break;
+                        }
+
+                        localItem.Id = _.Get<int>("id");
+                        localItem.Name = _.Get<string>("name");
+                        localItem.BuildResult = _.Get<int>("build_result");
+                        localItem.BuildTime = _.Get<decimal>("build_time");
+                        return localItem;
                     });
 
             item.Composition = _dataProvider
@@ -88,7 +130,7 @@ namespace FactorioHelper
         {
             return itemsToProduce
                 .Where(_ => _.Composition.ContainsKey(item.Id))
-                .Sum(_ => (_.Composition[item.Id] * itemsResult[_]) / GetRealBuildTime(_));
+                .Sum(_ => (_.Composition[item.Id] * itemsResult[_]) / _.GetRealBuildTime(this));
         }
 
         private void CheckSuitableItem(
@@ -111,32 +153,6 @@ namespace FactorioHelper
                     currentItemIsSuitable = true;
                 }
             }
-        }
-
-        internal Dictionary<BaseItem, int> GetItemsToProduce(decimal targetPerSec, int itemId)
-        {
-            var itemsToProduce = GetFullListOfItemsToProduce(itemId);
-
-            var itemsResult = new Dictionary<BaseItem, int>();
-
-            var i = 0;
-            while (i < itemsToProduce.Count)
-            {
-                CheckSuitableItem(itemsToProduce, itemsResult, i);
-
-                var item = itemsToProduce[i];
-
-                var itemTargetPerSec = item.Id == itemId
-                    ? targetPerSec
-                    : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
-
-                var requirements = itemTargetPerSec * (GetRealBuildTime(item) / item.BuildResult);
-
-                itemsResult.Add(item, (int)Math.Ceiling(requirements));
-                i++;
-            }
-
-            return itemsResult;
         }
     }
 }

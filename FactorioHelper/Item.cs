@@ -13,7 +13,7 @@ namespace FactorioHelper
         }
     }
 
-    class Item : BaseItem
+    abstract class Item : BaseItem
     {
         public decimal BuildTime { get; set; }
         public int BuildResult { get; set; }
@@ -43,6 +43,21 @@ namespace FactorioHelper
         public override decimal GetRealBuildTime(ProductionService productionService)
         {
             return BuildTime / productionService._miningDrillType.GetRate(productionService._miningBonus);
+        }
+    }
+
+    class ChemicalItem : Item
+    {
+        // no specific behavior for now
+    }
+
+    class RefiningItem : Item
+    {
+        public override decimal GetRealBuildTime(ProductionService productionService)
+        {
+            // to display the quantity required by sec on the main screen
+            // (realtime / buildresult = 1)
+            return BuildResult;
         }
     }
 }

@@ -100,8 +100,11 @@ namespace FactorioHelper
                             case ItemBuildType.MiningDrill:
                                 localItem = new MiningItem();
                                 break;
-                            default:
-                                localItem = new Item();
+                            case ItemBuildType.Refining:
+                                localItem = new RefiningItem();
+                                break;
+                            case ItemBuildType.ChemicalPlant:
+                                localItem = new ChemicalItem();
                                 break;
                         }
 

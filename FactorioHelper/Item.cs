@@ -60,4 +60,9 @@ namespace FactorioHelper
             return BuildResult;
         }
     }
+
+    class OtherItem : Item
+    {
+        // no specific behavior for now
+    }
 }

@@ -119,6 +119,9 @@ namespace FactorioHelper
                             case ItemBuildType.ChemicalPlant:
                                 localItem = new ChemicalItem();
                                 break;
+                            case ItemBuildType.Other:
+                                localItem = new OtherItem();
+                                break;
                         }
 
                         localItem.Id = _.Get<int>("id");

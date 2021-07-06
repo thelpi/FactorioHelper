@@ -26,7 +26,8 @@
         ChemicalPlant,
         Furnace,
         MiningDrill,
-        Refining
+        Refining,
+        Other
     }
 
     static class EnumExtensions

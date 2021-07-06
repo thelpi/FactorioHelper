@@ -131,9 +131,9 @@ namespace FactorioHelper
             item.Composition = _dataProvider
                 .GetDatas(
                     $"SELECT source_item_id, quantity FROM component WHERE target_item_id = {itemId}",
-                    _ => new KeyValuePair<int, decimal>(
+                    _ => new KeyValuePair<int, int>(
                         _.Get<int>("source_item_id"),
-                        _.Get<decimal>("quantity")))
+                        _.Get<int>("quantity")))
                 .ToDictionary(_ => _.Key, _ => _.Value);
 
             return item;

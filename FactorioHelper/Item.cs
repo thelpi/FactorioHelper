@@ -17,7 +17,7 @@ namespace FactorioHelper
     {
         public decimal BuildTime { get; set; }
         public int BuildResult { get; set; }
-        public IReadOnlyDictionary<int, decimal> Composition { get; set; }
+        public IReadOnlyDictionary<int, int> Composition { get; set; }
 
         public virtual decimal GetRealBuildTime(ProductionService productionService) => BuildTime;
     }

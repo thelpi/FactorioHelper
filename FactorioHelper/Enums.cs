@@ -30,6 +30,15 @@
         Other
     }
 
+    enum Recipe
+    {
+        BasicOilProcessing = 1,
+        AdvancedOilProcessing,
+        CoalLiquefaction,
+        LightOilCracking,
+        HeavyOilCracking
+    }
+
     static class EnumExtensions
     {
         public static decimal GetRate(this FurnaceType furnaceType)

@@ -6,6 +6,10 @@ namespace FactorioHelper
 {
     class ProductionService
     {
+        private const int PetroleumGasId = 26;
+        private const int HeavyOilId = 41;
+        private const int LightOilId = 42;
+
         private const int EachSciencePackItemId = 0;
         private static readonly int[] SciencePackIdList = new[] { 1, 7, 12, 21, 28, 33 };
 
@@ -19,6 +23,28 @@ namespace FactorioHelper
         internal ProductionService(IDataProvider dataProvider)
         {
             _dataProvider = dataProvider;
+        }
+
+        internal OilProductionOutput GetOilToProduce(IReadOnlyCollection<ProductionItem> fromProduction)
+        {
+            var lightReq = fromProduction.SingleOrDefault(_ => _.Id == LightOilId)?.TotalQuantityRequirement ?? 0;
+            var heavyReq = fromProduction.SingleOrDefault(_ => _.Id == HeavyOilId)?.TotalQuantityRequirement ?? 0;
+            var gazReq = fromProduction.SingleOrDefault(_ => _.Id == PetroleumGasId)?.TotalQuantityRequirement ?? 0;
+
+            return new OilProductionOutput
+            {
+                ChemicalPlantRequirements = new Dictionary<Recipe, int>
+                {
+                    { Recipe.HeavyOilCracking, 10 },
+                    { Recipe.LightOilCracking, 20 }
+                },
+                RefineryRequirements = new Dictionary<Recipe, int>
+                {
+                    { Recipe.AdvancedOilProcessing, 30 },
+                    { Recipe.BasicOilProcessing, 40 },
+                    { Recipe.CoalLiquefaction, 50 },
+                }
+            };
         }
 
         internal IReadOnlyCollection<ProductionItem> GetItemsToProduce(decimal targetPerSec, int itemId)
@@ -45,7 +71,8 @@ namespace FactorioHelper
                     Id = item.Id,
                     RealMachineRequirement = itemTargetPerSec * rate,
                     PerSecQuantityRequirement = Math.Round(itemTargetPerSec, 3),
-                    Name = item.Name
+                    Name = item.Name,
+                    BuildType = item.BuildType
                 });
                 i++;
             }
@@ -108,7 +135,8 @@ namespace FactorioHelper
                     {
                         Item localItem = null;
 
-                        switch ((ItemBuildType)_.Get<int>("build_type_id"))
+                        var buildType = (ItemBuildType)_.Get<int>("build_type_id");
+                        switch (buildType)
                         {
                             case ItemBuildType.AssemblingMachine:
                                 localItem = new AssemblingItem();
@@ -134,6 +162,7 @@ namespace FactorioHelper
                         localItem.Name = _.Get<string>("name");
                         localItem.BuildResult = _.Get<int>("build_result");
                         localItem.BuildTime = _.Get<decimal>("build_time");
+                        localItem.BuildType = buildType;
                         return localItem;
                     });
 

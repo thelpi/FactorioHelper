@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 
 namespace FactorioHelper
@@ -51,8 +52,15 @@ namespace FactorioHelper
             _productionService._miningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
             _productionService._miningBonus = MiningBonusComboBox.SelectedIndex;
 
-            ResultsListBox.ItemsSource = _productionService.GetItemsToProduce(targetPerSec, itemId);
+            var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
+            var oilProduction = _productionService.GetOilToProduce(production);
+
+            ResultsListBox.ItemsSource = production;
             ResultsScrollViewer.Visibility = Visibility.Visible;
+
+            RefineryOilResultsListBox.ItemsSource = oilProduction.RefineryRequirements;
+            ChemicalOilResultsListBox.ItemsSource = oilProduction.ChemicalPlantRequirements;
+            OilResultsScrollViewer.Visibility = Visibility.Visible;
         }
 
         private bool CheckFormInput(out decimal targetPerSec)

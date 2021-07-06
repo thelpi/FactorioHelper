@@ -9,6 +9,8 @@
         Title="MainWindow" MaxHeight="500" SizeToContent="WidthAndHeight">
     <Window.Resources>
         <local:ItemIdImageConverter x:Key="itemIdImageConverter" />
+        <local:BuildTypeImageConverter x:Key="buildTypeImageConverter" />
+        <local:RecipeImageConverter x:Key="recipeImageConverter" />
     </Window.Resources>
     <DockPanel Margin="10">
         <StackPanel DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
@@ -76,6 +78,13 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
+                        <GridViewColumn Header="">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Width="30" Height="30" Source="{Binding Path=BuildType, Converter={StaticResource buildTypeImageConverter}}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Header="Fact. req.">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
@@ -93,6 +102,50 @@
                     </GridView>
                 </ListView.View>
             </ListView>
+        </ScrollViewer>
+        <ScrollViewer Name="OilResultsScrollViewer" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+            <StackPanel Orientation="Vertical">
+                <ListView Name="RefineryOilResultsListBox">
+                    <ListView.View>
+                        <GridView AllowsColumnReorder="False">
+                            <GridViewColumn Header="">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Width="30" Height="30" Source="{Binding Path=Key, Converter={StaticResource recipeImageConverter}}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Req.">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Label VerticalAlignment="Center" Content="{Binding Path=Value}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                <ListView Name="ChemicalOilResultsListBox">
+                    <ListView.View>
+                        <GridView AllowsColumnReorder="False">
+                            <GridViewColumn Header="">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Width="30" Height="30" Source="{Binding Path=Key, Converter={StaticResource recipeImageConverter}}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Req.">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Label VerticalAlignment="Center" Content="{Binding Path=Value}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </StackPanel>
         </ScrollViewer>
     </DockPanel>
 </Window>

@@ -67,7 +67,7 @@
     </Compile>
     <Compile Include="Enums.cs" />
     <Compile Include="Item.cs" />
-    <Compile Include="ItemIdImageConverter.cs" />
+    <Compile Include="Converters.cs" />
     <Compile Include="MySqlDataProvider.cs" />
     <Compile Include="IDataProvider.cs" />
     <Compile Include="MainWindow.xaml.cs">
@@ -76,6 +76,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="OilProductionOutput.cs" />
     <Compile Include="ProductionItem.cs" />
     <Compile Include="ProductionService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">

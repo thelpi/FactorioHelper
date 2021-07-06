@@ -58,5 +58,17 @@ namespace FactorioHelper.Properties {
                 return ((string)(this["sqlPwd"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\LPI\\Desktop\\factorio\\pictures")]
+        public string picturesPath {
+            get {
+                return ((string)(this["picturesPath"]));
+            }
+            set {
+                this["picturesPath"] = value;
+            }
+        }
     }
 }

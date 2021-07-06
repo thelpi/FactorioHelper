@@ -6,6 +6,7 @@ namespace FactorioHelper
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public ItemBuildType BuildType { get; set; }
 
         public override string ToString()
         {

@@ -21,11 +21,11 @@ namespace FactorioHelper
             _dataProvider = dataProvider;
         }
 
-        internal Dictionary<BaseItem, int> GetItemsToProduce(decimal targetPerSec, int itemId)
+        internal IReadOnlyCollection<ProductionItem> GetItemsToProduce(decimal targetPerSec, int itemId)
         {
             var itemsToProduce = GetFullListOfItemsToProduce(itemId);
 
-            var itemsResult = new Dictionary<BaseItem, int>();
+            var itemsResult = new List<ProductionItem>();
 
             var i = 0;
             while (i < itemsToProduce.Count)
@@ -38,9 +38,15 @@ namespace FactorioHelper
                     ? targetPerSec
                     : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
 
-                var requirements = itemTargetPerSec * (item.GetRealBuildTime(this) / item.BuildResult);
+                var rate = item.GetRealBuildTime(this) / item.BuildResult;
 
-                itemsResult.Add(item, (int)Math.Ceiling(requirements));
+                itemsResult.Add(new ProductionItem
+                {
+                    Id = item.Id,
+                    RealMachineRequirement = itemTargetPerSec * rate,
+                    PerSecQuantityRequirement = Math.Round(itemTargetPerSec, 3),
+                    Name = item.Name
+                });
                 i++;
             }
 
@@ -144,25 +150,25 @@ namespace FactorioHelper
 
         private decimal GetItemPerSecFromParents(
             List<Item> itemsToProduce,
-            Dictionary<BaseItem, int> itemsResult,
+            List<ProductionItem> itemsResult,
             Item item)
         {
             return itemsToProduce
                 .Where(_ => _.Composition.ContainsKey(item.Id))
-                .Sum(_ => (_.Composition[item.Id] * itemsResult[_]) / _.GetRealBuildTime(this));
+                .Sum(_ => (_.Composition[item.Id] * itemsResult.Single(x => x.Id == _.Id).MachineRequirement) / _.GetRealBuildTime(this));
         }
 
         private void CheckSuitableItem(
             List<Item> itemsToProduce,
-            Dictionary<BaseItem, int>
-            itemsResult, int i)
+            List<ProductionItem> itemsResult,
+            int i)
         {
             var currentItemIsSuitable = false;
             while (!currentItemIsSuitable)
             {
                 var it = itemsToProduce[i];
                 var parentItems = itemsToProduce.Where(_ => _.Composition.ContainsKey(it.Id)).ToList();
-                if (parentItems.Count > 0 && !parentItems.All(_ => itemsResult.ContainsKey(_)))
+                if (parentItems.Count > 0 && !parentItems.All(_ => itemsResult.Any(x => x.Id == _.Id)))
                 {
                     itemsToProduce.Add(it);
                     itemsToProduce.RemoveAt(i);

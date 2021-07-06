@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:FactorioHelper"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"
         ResizeMode="CanMinimize"
-        Title="MainWindow" Height="320" SizeToContent="Width">
+        Title="MainWindow" MaxHeight="500" SizeToContent="WidthAndHeight">
     <Window.Resources>
         <local:ItemIdImageConverter x:Key="itemIdImageConverter" />
     </Window.Resources>
@@ -59,17 +59,40 @@
             <Button Margin="0, 25, 0, 0" Content="Compute requirements" Name="CalculateButton" Click="CalculateButton_Click" />
         </StackPanel>
         <ScrollViewer Name="ResultsScrollViewer" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
-            <ListBox Name="ResultsListBox">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <Image Width="30" Height="30" Source="{Binding Path=Key.Id, Converter={StaticResource itemIdImageConverter}}" />
-                            <Label Width="200" Content="{Binding Path=Key.Name}" VerticalAlignment="Center" />
-                            <Label Width="50" VerticalAlignment="Center" Content="{Binding Path=Value}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+            <ListView Name="ResultsListBox">
+                <ListView.View>
+                    <GridView AllowsColumnReorder="False">
+                        <GridViewColumn Header="">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Width="30" Height="30" Source="{Binding Path=Id, Converter={StaticResource itemIdImageConverter}}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Name">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Label Content="{Binding Path=Name}" VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Fact. req.">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Label VerticalAlignment="Center" Content="{Binding Path=MachineRequirement}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="P/sec. req.">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Label VerticalAlignment="Center" Content="{Binding Path=PerSecQuantityRequirement}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
         </ScrollViewer>
     </DockPanel>
 </Window>

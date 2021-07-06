@@ -28,10 +28,12 @@ namespace FactorioHelper
             ItemsComboBox.ItemsSource = _productionService.GetBaseItemsList(true);
 
             // arbitrary default values
+            ItemsComboBox.SelectedIndex = 0;
             MiningDrillTypeComboBox.SelectedIndex = 1;
             FurnaceTypeComboBox.SelectedIndex = 2;
             AssemblingTypeComboBox.SelectedIndex = 1;
             MiningBonusComboBox.SelectedIndex = 2;
+            TargetPerSecText.Text = "1.2";
         }
 
         private void CalculateButton_Click(object sender, RoutedEventArgs e)

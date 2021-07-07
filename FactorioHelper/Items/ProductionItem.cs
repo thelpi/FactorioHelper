@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FactorioHelper
+namespace FactorioHelper.Items
 {
     class ProductionItem : BaseItem
     {

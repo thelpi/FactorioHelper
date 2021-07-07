@@ -65,9 +65,24 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Enums.cs" />
-    <Compile Include="Item.cs" />
-    <Compile Include="Converters.cs" />
+    <Compile Include="Converters\BuildTypeImageConverter.cs" />
+    <Compile Include="Converters\ItemIdImageConverter.cs" />
+    <Compile Include="Converters\RecipeImageConverter.cs" />
+    <Compile Include="EnumExtensions.cs" />
+    <Compile Include="ImageHelper.cs" />
+    <Compile Include="Enums\AssemblingType.cs" />
+    <Compile Include="Enums\FurnaceType.cs" />
+    <Compile Include="Enums\ItemBuildType.cs" />
+    <Compile Include="Enums\MiningDrillType.cs" />
+    <Compile Include="Items\AssemblingItem.cs" />
+    <Compile Include="Items\BaseItem.cs" />
+    <Compile Include="Items\ChemicalItem.cs" />
+    <Compile Include="Items\FurnaceItem.cs" />
+    <Compile Include="Items\Item.cs" />
+    <Compile Include="Items\MiningItem.cs" />
+    <Compile Include="Items\OtherItem.cs" />
+    <Compile Include="Items\RecipeItem.cs" />
+    <Compile Include="Items\RefiningItem.cs" />
     <Compile Include="MySqlDataProvider.cs" />
     <Compile Include="IDataProvider.cs" />
     <Compile Include="MainWindow.xaml.cs">
@@ -77,7 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="OilProductionOutput.cs" />
-    <Compile Include="ProductionItem.cs" />
+    <Compile Include="Items\ProductionItem.cs" />
     <Compile Include="ProductionService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

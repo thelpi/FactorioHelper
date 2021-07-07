@@ -1,44 +1,7 @@
-﻿namespace FactorioHelper
+﻿using FactorioHelper.Enums;
+
+namespace FactorioHelper
 {
-    enum MiningDrillType
-    {
-        Burner,
-        Electric
-    }
-
-    enum FurnaceType
-    {
-        Stone,
-        Steel,
-        Electric
-    }
-
-    enum AssemblingType
-    {
-        Machine1,
-        Machine2,
-        Machine3
-    }
-
-    enum ItemBuildType
-    {
-        AssemblingMachine = 1,
-        ChemicalPlant,
-        Furnace,
-        MiningDrill,
-        Refining,
-        Other
-    }
-
-    enum Recipe
-    {
-        BasicOilProcessing = 1,
-        AdvancedOilProcessing,
-        CoalLiquefaction,
-        LightOilCracking,
-        HeavyOilCracking
-    }
-
     static class EnumExtensions
     {
         public static decimal GetRate(this FurnaceType furnaceType)

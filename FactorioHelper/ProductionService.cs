@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FactorioHelper.Enums;
+using FactorioHelper.Items;
 
 namespace FactorioHelper
 {
@@ -9,45 +11,106 @@ namespace FactorioHelper
         private const int PetroleumGasId = 26;
         private const int HeavyOilId = 41;
         private const int LightOilId = 42;
+        private const int CrudeOilId = 43;
+
+        private const int BasicOilProcessingRecipeId = 1;
 
         private const int EachSciencePackItemId = 0;
         private static readonly int[] SciencePackIdList = new[] { 1, 7, 12, 21, 28, 33 };
 
         private readonly IDataProvider _dataProvider;
 
-        public FurnaceType _furnaceType { get; set; }
-        public MiningDrillType _miningDrillType { get; set; }
-        public int _miningBonus { get; set; }
-        public AssemblingType _assemblingType { get; set; }
+        public FurnaceType FurnaceType { get; set; }
+        public MiningDrillType MiningDrillType { get; set; }
+        public int MiningBonus { get; set; }
+        public AssemblingType AssemblingType { get; set; }
+        public bool AdvancedOilProcessing { get; set; }
 
         internal ProductionService(IDataProvider dataProvider)
         {
             _dataProvider = dataProvider;
         }
 
-        internal OilProductionOutput GetOilToProduce(IReadOnlyCollection<ProductionItem> fromProduction)
+        internal OilProductionOutput GetOilToProduce(List<ProductionItem> fromProduction)
         {
-            var lightReq = fromProduction.SingleOrDefault(_ => _.Id == LightOilId)?.TotalQuantityRequirement ?? 0;
-            var heavyReq = fromProduction.SingleOrDefault(_ => _.Id == HeavyOilId)?.TotalQuantityRequirement ?? 0;
-            var gazReq = fromProduction.SingleOrDefault(_ => _.Id == PetroleumGasId)?.TotalQuantityRequirement ?? 0;
+            var lightReq = GetOilRequirement(fromProduction, LightOilId);
+            var heavyReq = GetOilRequirement(fromProduction, HeavyOilId);
+            var gazReqPerSec = GetOilRequirement(fromProduction, PetroleumGasId);
 
-            return new OilProductionOutput
+            if (lightReq > 0 || heavyReq > 0)
             {
-                ChemicalPlantRequirements = new Dictionary<Recipe, int>
+                // required anyway
+                AdvancedOilProcessing = true;
+            }
+            else if (gazReqPerSec == 0)
+            {
+                return new OilProductionOutput
                 {
-                    { Recipe.HeavyOilCracking, 10 },
-                    { Recipe.LightOilCracking, 20 }
-                },
-                RefineryRequirements = new Dictionary<Recipe, int>
+                    ChemicalPlantRequirements = new Dictionary<int, int>(),
+                    RefineryRequirements = new Dictionary<int, int>()
+                };
+            }
+
+            if (!AdvancedOilProcessing)
+            {
+                var basicOilProcessingRecipe = GetRecipeById(BasicOilProcessingRecipeId);
+                
+                var gazProdPerSec = basicOilProcessingRecipe.GetTargetPerSec(PetroleumGasId);
+                
+                var refineryReq = (int)Math.Ceiling(gazReqPerSec / gazProdPerSec);
+                
+                fromProduction.RemoveAll(_ => _.Id == PetroleumGasId);
+
+                var sourceItems = basicOilProcessingRecipe.SourceItems
+                    .Select(_ => new KeyValuePair<int, decimal>(_.Key, basicOilProcessingRecipe.GetSourcePerSec(_.Key) * refineryReq))
+                    .ToList();
+
+                foreach (var sourceItem in sourceItems)
                 {
-                    { Recipe.AdvancedOilProcessing, 30 },
-                    { Recipe.BasicOilProcessing, 40 },
-                    { Recipe.CoalLiquefaction, 50 },
+                    var itembaseInfo = GetItemById(sourceItem.Key);
+                    var existingItem = fromProduction.FirstOrDefault(_ => _.Id == sourceItem.Key);
+                    var timeRate = itembaseInfo.GetRealBuildTime(this) / itembaseInfo.BuildResult;
+                    if (existingItem == null)
+                    {
+                        fromProduction.Add(new ProductionItem
+                        {
+                            Id = itembaseInfo.Id,
+                            Name = itembaseInfo.Name,
+                            BuildType = itembaseInfo.BuildType,
+                            RealMachineRequirement = sourceItem.Value * timeRate,
+                            PerSecQuantityRequirement = sourceItem.Value
+                        });
+                    }
+                    else
+                    {
+                        existingItem.PerSecQuantityRequirement += sourceItem.Value;
+                        existingItem.RealMachineRequirement = existingItem.PerSecQuantityRequirement / timeRate;
+                    }
                 }
-            };
+
+                return new OilProductionOutput
+                {
+                    ChemicalPlantRequirements = new Dictionary<int, int>(),
+                    RefineryRequirements = new Dictionary<int, int> { { BasicOilProcessingRecipeId, refineryReq } }
+                };
+            }
+
+            var recipes = GetRecipes();
+
+            return null;
         }
 
-        internal IReadOnlyCollection<ProductionItem> GetItemsToProduce(decimal targetPerSec, int itemId)
+        private static decimal GetOilRequirement(IReadOnlyCollection<ProductionItem> fromProduction, int oilId)
+        {
+            return GetOilItem(fromProduction, oilId)?.PerSecQuantityRequirement ?? 0;
+        }
+
+        private static ProductionItem GetOilItem(IReadOnlyCollection<ProductionItem> fromProduction, int oilId)
+        {
+            return fromProduction.SingleOrDefault(_ => _.Id == oilId);
+        }
+
+        internal List<ProductionItem> GetItemsToProduce(decimal targetPerSec, int itemId)
         {
             var itemsToProduce = GetFullListOfItemsToProduce(itemId);
 
@@ -70,7 +133,7 @@ namespace FactorioHelper
                 {
                     Id = item.Id,
                     RealMachineRequirement = itemTargetPerSec * rate,
-                    PerSecQuantityRequirement = Math.Round(itemTargetPerSec, 3),
+                    PerSecQuantityRequirement = itemTargetPerSec,
                     Name = item.Name,
                     BuildType = item.BuildType
                 });
@@ -175,6 +238,42 @@ namespace FactorioHelper
                 .ToDictionary(_ => _.Key, _ => _.Value);
 
             return item;
+        }
+
+        private IReadOnlyCollection<RecipeItem> GetRecipes()
+        {
+            return _dataProvider
+                .GetDatas($"SELECT id FROM recipe", _ => _.Get<int>("id"))
+                .Select(_ => GetRecipeById(_))
+                .ToList();
+        }
+
+        private RecipeItem GetRecipeById(int recipeId)
+        {
+            var recipe = _dataProvider
+                .GetData(
+                    $"SELECT id, name, build_time, build_type_id FROM recipe WHERE id = {recipeId}",
+                    _ => new RecipeItem
+                   {
+                       BuildTime = _.Get<decimal>("build_time"),
+                       BuildType = (ItemBuildType)_.Get<int>("build_type_id"),
+                       Id = _.Get<int>("id"),
+                       Name = _.Get<string>("name")
+                   });
+
+            recipe.SourceItems = _dataProvider
+                .GetDatas(
+                    $"SELECT item_id, quantity FROM recipe_source WHERE recipe_id = {recipeId}",
+                    _ => new KeyValuePair<int, int>(_.Get<int>("item_id"), _.Get<int>("quantity")))
+                .ToDictionary(_ => _.Key, _ => _.Value);
+
+            recipe.TargetItems = _dataProvider
+                .GetDatas(
+                    $"SELECT item_id, quantity FROM recipe_target WHERE recipe_id = {recipeId}",
+                    _ => new KeyValuePair<int, int>(_.Get<int>("item_id"), _.Get<int>("quantity")))
+                .ToDictionary(_ => _.Key, _ => _.Value);
+
+            return recipe;
         }
 
         private decimal GetItemPerSecFromParents(

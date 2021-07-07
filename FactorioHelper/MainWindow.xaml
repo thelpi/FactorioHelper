@@ -3,19 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:FactorioHelper"
+        xmlns:converters="clr-namespace:FactorioHelper.Converters"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"
         ResizeMode="CanMinimize"
         Title="MainWindow" MaxHeight="500" SizeToContent="WidthAndHeight">
     <Window.Resources>
-        <local:ItemIdImageConverter x:Key="itemIdImageConverter" />
-        <local:BuildTypeImageConverter x:Key="buildTypeImageConverter" />
-        <local:RecipeImageConverter x:Key="recipeImageConverter" />
+        <converters:ItemIdImageConverter x:Key="itemIdImageConverter" />
+        <converters:BuildTypeImageConverter x:Key="buildTypeImageConverter" />
+        <converters:RecipeImageConverter x:Key="recipeImageConverter" />
     </Window.Resources>
     <DockPanel Margin="10">
         <StackPanel DockPanel.Dock="Left" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Vertical">
             <StackPanel Orientation="Horizontal">
-                <Label Content="Targeted item:" Width="100" VerticalAlignment="Center" />
+                <Label HorizontalContentAlignment="Right" Content="Targeted item:" Width="100" VerticalAlignment="Center" />
                 <ComboBox VerticalContentAlignment="Center" Height="40" Width="250" Name="ItemsComboBox">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
@@ -28,19 +28,19 @@
                 </ComboBox>
             </StackPanel>
             <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
-                <Label Content="Target p/ sec:" Width="100" />
+                <Label HorizontalContentAlignment="Right" Content="Target p/ sec:" Width="100" />
                 <TextBox Width="250" VerticalContentAlignment="Center" Name="TargetPerSecText" />
             </StackPanel>
             <StackPanel Margin="0, 15, 0, 0" Orientation="Horizontal">
-                <Label Content="Furnace type:" Width="100" />
+                <Label HorizontalContentAlignment="Right" Content="Furnace type:" Width="100" />
                 <ComboBox Width="250" Name="FurnaceTypeComboBox" />
             </StackPanel>
             <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
-                <Label Content="Mining drill type:" Width="100" />
+                <Label HorizontalContentAlignment="Right" Content="Mining drill type:" Width="100" />
                 <ComboBox Width="250" Name="MiningDrillTypeComboBox" />
             </StackPanel>
             <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
-                <Label Content="Mining bonus:" Width="100" />
+                <Label HorizontalContentAlignment="Right" Content="Mining bonus:" Width="100" />
                 <ComboBox Width="250" Name="MiningBonusComboBox">
                     <ComboBoxItem>0</ComboBoxItem>
                     <ComboBoxItem>1</ComboBoxItem>
@@ -55,8 +55,12 @@
                 </ComboBox>
             </StackPanel>
             <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
-                <Label Content="Assembling type:" Width="100" />
+                <Label HorizontalContentAlignment="Right" Content="Assembling type:" Width="100" />
                 <ComboBox Width="250" Name="AssemblingTypeComboBox" />
+            </StackPanel>
+            <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
+                <Label HorizontalContentAlignment="Right" Content="Advanced oil:" Width="100" />
+                <CheckBox Width="250" Name="AdvancedRefiningCheckBox" VerticalAlignment="Center" />
             </StackPanel>
             <Button Margin="0, 25, 0, 0" Content="Compute requirements" Name="CalculateButton" Click="CalculateButton_Click" />
         </StackPanel>

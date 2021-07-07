@@ -4,7 +4,7 @@ namespace FactorioHelper
 {
     class OilProductionOutput
     {
-        public IReadOnlyDictionary<Recipe, int> ChemicalPlantRequirements { get; set; }
-        public IReadOnlyDictionary<Recipe, int> RefineryRequirements { get; set; }
+        public IReadOnlyDictionary<int, int> ChemicalPlantRequirements { get; set; }
+        public IReadOnlyDictionary<int, int> RefineryRequirements { get; set; }
     }
 }

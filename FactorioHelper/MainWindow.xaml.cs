@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Globalization;
-using System.Linq;
 using System.Windows;
+using FactorioHelper.Enums;
+using FactorioHelper.Items;
 
 namespace FactorioHelper
 {
@@ -35,6 +36,7 @@ namespace FactorioHelper
             AssemblingTypeComboBox.SelectedIndex = 1;
             MiningBonusComboBox.SelectedIndex = 2;
             TargetPerSecText.Text = "1.2";
+            AdvancedRefiningCheckBox.IsChecked = true;
         }
 
         private void CalculateButton_Click(object sender, RoutedEventArgs e)
@@ -47,10 +49,11 @@ namespace FactorioHelper
 
             var itemId = (ItemsComboBox.SelectedItem as BaseItem).Id;
 
-            _productionService._assemblingType = (AssemblingType)AssemblingTypeComboBox.SelectedItem;
-            _productionService._furnaceType = (FurnaceType)FurnaceTypeComboBox.SelectedItem;
-            _productionService._miningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
-            _productionService._miningBonus = MiningBonusComboBox.SelectedIndex;
+            _productionService.AssemblingType = (AssemblingType)AssemblingTypeComboBox.SelectedItem;
+            _productionService.FurnaceType = (FurnaceType)FurnaceTypeComboBox.SelectedItem;
+            _productionService.MiningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
+            _productionService.MiningBonus = MiningBonusComboBox.SelectedIndex;
+            _productionService.AdvancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
 
             var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
             var oilProduction = _productionService.GetOilToProduce(production);

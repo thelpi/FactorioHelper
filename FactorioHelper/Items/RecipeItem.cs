@@ -10,12 +10,12 @@ namespace FactorioHelper.Items
 
         public decimal GetTargetPerSec(int id)
         {
-            return TargetItems[id] / BuildTime;
+            return (TargetItems.ContainsKey(id) ? TargetItems[id] : 0) / BuildTime;
         }
 
         public decimal GetSourcePerSec(int id)
         {
-            return SourceItems[id] / BuildTime;
+            return (SourceItems.ContainsKey(id) ? SourceItems[id] : 0) / BuildTime;
         }
     }
 }

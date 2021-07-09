@@ -12,8 +12,12 @@ namespace FactorioHelper
         private const int HeavyOilId = 41;
         private const int LightOilId = 42;
         private const int CrudeOilId = 43;
+        private const int WaterId = 44;
 
         private const int BasicOilProcessingRecipeId = 1;
+        private const int AdvancedOilProcessingRecipeId = 2;
+        private const int LightOilCrackingRecipeId = 4;
+        private const int HeavyOilCrackingRecipeId = 5;
 
         private const int EachSciencePackItemId = 0;
         private static readonly int[] SciencePackIdList = new[] { 1, 7, 12, 21, 28, 33 };
@@ -33,11 +37,11 @@ namespace FactorioHelper
 
         internal OilProductionOutput GetOilToProduce(List<ProductionItem> fromProduction)
         {
-            var lightReq = GetOilRequirement(fromProduction, LightOilId);
-            var heavyReq = GetOilRequirement(fromProduction, HeavyOilId);
+            var lightReqPerSec = GetOilRequirement(fromProduction, LightOilId);
+            var heavyReqPerSec = GetOilRequirement(fromProduction, HeavyOilId);
             var gazReqPerSec = GetOilRequirement(fromProduction, PetroleumGasId);
 
-            if (lightReq > 0 || heavyReq > 0)
+            if (lightReqPerSec > 0 || heavyReqPerSec > 0)
             {
                 // required anyway
                 AdvancedOilProcessing = true;
@@ -47,7 +51,8 @@ namespace FactorioHelper
                 return new OilProductionOutput
                 {
                     ChemicalPlantRequirements = new Dictionary<int, int>(),
-                    RefineryRequirements = new Dictionary<int, int>()
+                    RefineryRequirements = new Dictionary<int, int>(),
+                    RemainsPerSec = new Dictionary<int, decimal>()
                 };
             }
 
@@ -57,47 +62,168 @@ namespace FactorioHelper
                 
                 var gazProdPerSec = basicOilProcessingRecipe.GetTargetPerSec(PetroleumGasId);
                 
-                var refineryReq = (int)Math.Ceiling(gazReqPerSec / gazProdPerSec);
+                var refineryCountReq = (int)Math.Ceiling(gazReqPerSec / gazProdPerSec);
                 
                 fromProduction.RemoveAll(_ => _.Id == PetroleumGasId);
 
                 var sourceItems = basicOilProcessingRecipe.SourceItems
-                    .Select(_ => new KeyValuePair<int, decimal>(_.Key, basicOilProcessingRecipe.GetSourcePerSec(_.Key) * refineryReq))
+                    .Select(_ => new KeyValuePair<int, decimal>(_.Key, basicOilProcessingRecipe.GetSourcePerSec(_.Key) * refineryCountReq))
                     .ToList();
 
                 foreach (var sourceItem in sourceItems)
                 {
-                    var itembaseInfo = GetItemById(sourceItem.Key);
-                    var existingItem = fromProduction.FirstOrDefault(_ => _.Id == sourceItem.Key);
-                    var timeRate = itembaseInfo.GetRealBuildTime(this) / itembaseInfo.BuildResult;
-                    if (existingItem == null)
-                    {
-                        fromProduction.Add(new ProductionItem
-                        {
-                            Id = itembaseInfo.Id,
-                            Name = itembaseInfo.Name,
-                            BuildType = itembaseInfo.BuildType,
-                            RealMachineRequirement = sourceItem.Value * timeRate,
-                            PerSecQuantityRequirement = sourceItem.Value
-                        });
-                    }
-                    else
-                    {
-                        existingItem.PerSecQuantityRequirement += sourceItem.Value;
-                        existingItem.RealMachineRequirement = existingItem.PerSecQuantityRequirement / timeRate;
-                    }
+                    AddOrUpdateItemProuction(fromProduction, sourceItem);
                 }
 
                 return new OilProductionOutput
                 {
                     ChemicalPlantRequirements = new Dictionary<int, int>(),
-                    RefineryRequirements = new Dictionary<int, int> { { BasicOilProcessingRecipeId, refineryReq } }
+                    RefineryRequirements = new Dictionary<int, int> { { BasicOilProcessingRecipeId, refineryCountReq } },
+                    RemainsPerSec = new Dictionary<int, decimal>()
                 };
             }
 
-            var recipes = GetRecipes();
+            var recipes = new[]
+            {
+                GetRecipeById(BasicOilProcessingRecipeId),
+                GetRecipeById(AdvancedOilProcessingRecipeId),
+                GetRecipeById(LightOilCrackingRecipeId),
+                GetRecipeById(HeavyOilCrackingRecipeId)
+            };
 
-            return null;
+            decimal gazTotalRemains = 0;
+            decimal heavyTotalRemains = 0;
+            decimal lightTotalRemains = 0;
+            decimal crudeConsome = 0;
+            decimal waterConsome = 0;
+            Dictionary<int, int> countFactoriesByRecipeFlagged = null;
+
+            var countFactoriesByRecipe = recipes.ToDictionary(_ => _.Id, _ => 0);
+            
+            const int MaxAttemps = 50;
+            for (int i = 0; i < MaxAttemps; i++)
+            {
+                for (int j = 1; j < MaxAttemps; j++) // once advanced oil processing minimum
+                {
+                    for (int k = 0; k < MaxAttemps; k++)
+                    {
+                        for (int l = 0; l < MaxAttemps; l++)
+                        {
+                            countFactoriesByRecipe[BasicOilProcessingRecipeId] = i;
+                            countFactoriesByRecipe[AdvancedOilProcessingRecipeId] = j;
+                            countFactoriesByRecipe[LightOilCrackingRecipeId] = k;
+                            countFactoriesByRecipe[HeavyOilCrackingRecipeId] = l;
+
+                            decimal GetConsumePerSec(int id) => recipes.Sum(_ => _.GetSourcePerSec(id) * countFactoriesByRecipe[_.Id]);
+                            decimal GetProducePerSec(int id) => recipes.Sum(_ => _.GetTargetPerSec(id) * countFactoriesByRecipe[_.Id]);
+
+                            var gazConsumePerSec = GetConsumePerSec(PetroleumGasId);
+                            var heavyConsumePerSec = GetConsumePerSec(HeavyOilId);
+                            var lightConsumePerSec = GetConsumePerSec(LightOilId);
+                            var crudeConsumePerSec = GetConsumePerSec(CrudeOilId);
+                            var waterConsumePerSec = GetConsumePerSec(WaterId);
+
+                            var gazProducePerSec = GetProducePerSec(PetroleumGasId);
+                            var heavyProducePerSec = GetProducePerSec(HeavyOilId);
+                            var lightProducePerSec = GetProducePerSec(LightOilId);
+
+                            var gazRemains = gazProducePerSec - gazConsumePerSec - gazReqPerSec;
+                            var heavyRemains = heavyProducePerSec - heavyConsumePerSec - heavyReqPerSec;
+                            var lightRemains = lightProducePerSec - lightConsumePerSec - lightReqPerSec;
+
+                            if (gazRemains >= 0 && heavyRemains >= 0 && lightRemains >= 0)
+                            {
+                                if (countFactoriesByRecipeFlagged == null
+                                    || (gazTotalRemains + heavyTotalRemains + lightTotalRemains) > (gazRemains + heavyRemains + lightRemains)
+                                    || ((gazTotalRemains + heavyTotalRemains + lightTotalRemains) == (gazRemains + heavyRemains + lightRemains)
+                                    && countFactoriesByRecipe.Sum(_ => _.Value) < countFactoriesByRecipeFlagged.Sum(_ => _.Value)))
+                                {
+                                    gazTotalRemains = gazRemains;
+                                    heavyTotalRemains = heavyRemains;
+                                    lightTotalRemains = lightRemains;
+                                    crudeConsome = crudeConsumePerSec;
+                                    waterConsome = waterConsumePerSec;
+                                    countFactoriesByRecipeFlagged = countFactoriesByRecipe.ToDictionary(_ => _.Key, _ => _.Value);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            fromProduction.RemoveAll(_ => _.Id == PetroleumGasId);
+            fromProduction.RemoveAll(_ => _.Id == HeavyOilId);
+            fromProduction.RemoveAll(_ => _.Id == LightOilId);
+
+            if (waterConsome > 0)
+            {
+                AddOrUpdateItemProuction(fromProduction, new KeyValuePair<int, decimal>(WaterId, waterConsome));
+            }
+            if (crudeConsome > 0)
+            {
+                AddOrUpdateItemProuction(fromProduction, new KeyValuePair<int, decimal>(CrudeOilId, crudeConsome));
+            }
+            
+            var remains = new Dictionary<int, decimal>();
+            if (gazTotalRemains > 0)
+            {
+                remains.Add(PetroleumGasId, gazTotalRemains);
+            }
+            if (heavyTotalRemains > 0)
+            {
+                remains.Add(HeavyOilId, heavyTotalRemains);
+            }
+            if (lightTotalRemains > 0)
+            {
+                remains.Add(LightOilId, lightTotalRemains);
+            }
+
+            var chemicalPlantReq = new Dictionary<int, int>();
+            var refineryReq = new Dictionary<int, int>();
+            foreach (var recipeId in countFactoriesByRecipeFlagged.Keys)
+            {
+                if (countFactoriesByRecipeFlagged[recipeId] > 0)
+                {
+                    if (recipes.First(_ => _.Id == recipeId).BuildType == ItemBuildType.ChemicalPlant)
+                    {
+                        chemicalPlantReq.Add(recipeId, countFactoriesByRecipeFlagged[recipeId]);
+                    }
+                    else
+                    {
+                        refineryReq.Add(recipeId, countFactoriesByRecipeFlagged[recipeId]);
+                    }
+                }
+            }
+
+            return new OilProductionOutput
+            {
+                RemainsPerSec = remains,
+                ChemicalPlantRequirements = chemicalPlantReq,
+                RefineryRequirements = refineryReq
+            };
+        }
+
+        private void AddOrUpdateItemProuction(List<ProductionItem> fromProduction, KeyValuePair<int, decimal> sourceItem)
+        {
+            var itembaseInfo = GetItemById(sourceItem.Key);
+            var existingItem = fromProduction.FirstOrDefault(_ => _.Id == sourceItem.Key);
+            var timeRate = itembaseInfo.GetRealBuildTime(this) / itembaseInfo.BuildResult;
+            if (existingItem == null)
+            {
+                fromProduction.Add(new ProductionItem
+                {
+                    Id = itembaseInfo.Id,
+                    Name = itembaseInfo.Name,
+                    BuildType = itembaseInfo.BuildType,
+                    RealMachineRequirement = sourceItem.Value * timeRate,
+                    PerSecQuantityRequirement = sourceItem.Value
+                });
+            }
+            else
+            {
+                existingItem.PerSecQuantityRequirement += sourceItem.Value;
+                existingItem.RealMachineRequirement = existingItem.PerSecQuantityRequirement / timeRate;
+            }
         }
 
         private static decimal GetOilRequirement(IReadOnlyCollection<ProductionItem> fromProduction, int oilId)
@@ -238,14 +364,6 @@ namespace FactorioHelper
                 .ToDictionary(_ => _.Key, _ => _.Value);
 
             return item;
-        }
-
-        private IReadOnlyCollection<RecipeItem> GetRecipes()
-        {
-            return _dataProvider
-                .GetDatas($"SELECT id FROM recipe", _ => _.Get<int>("id"))
-                .Select(_ => GetRecipeById(_))
-                .ToList();
         }
 
         private RecipeItem GetRecipeById(int recipeId)

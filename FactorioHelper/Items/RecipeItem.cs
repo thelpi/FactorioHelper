@@ -10,6 +10,7 @@ namespace FactorioHelper.Items
 
         public readonly Dictionary<int, decimal> _sourceBuildTimes = new Dictionary<int, decimal>();
         public readonly Dictionary<int, decimal> _targetBuildTimes = new Dictionary<int, decimal>();
+        public readonly Dictionary<int, decimal> _deltaBuildTimes = new Dictionary<int, decimal>();
 
         public decimal GetTargetPerSec(int id)
         {
@@ -27,6 +28,15 @@ namespace FactorioHelper.Items
                 _sourceBuildTimes.Add(id, (SourceItems.ContainsKey(id) ? SourceItems[id] : 0) / BuildTime);
             }
             return _sourceBuildTimes[id];
+        }
+
+        public decimal GetDeltaPerSec(int id)
+        {
+            if (!_deltaBuildTimes.ContainsKey(id))
+            {
+                _deltaBuildTimes.Add(id, ((TargetItems.ContainsKey(id) ? TargetItems[id] : 0) - (SourceItems.ContainsKey(id) ? SourceItems[id] : 0)) / BuildTime);
+            }
+            return _deltaBuildTimes[id];
         }
     }
 }

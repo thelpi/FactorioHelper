@@ -99,10 +99,8 @@ namespace FactorioHelper
 
             var countFactoriesByRecipe = recipes.ToDictionary(_ => _.Id, _ => 0);
 
-            decimal GetConsumePerSec(int id)
-                => recipes.Sum(_ => _.GetSourcePerSec(id) * countFactoriesByRecipe[_.Id]);
-            decimal GetProducePerSec(int id)
-                => recipes.Sum(_ => _.GetTargetPerSec(id) * countFactoriesByRecipe[_.Id]);
+            decimal GetDeltaPerSec(int id) =>
+                recipes.Sum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
 
             var startDate = DateTime.Now;
 
@@ -120,13 +118,13 @@ namespace FactorioHelper
                             countFactoriesByRecipe[LightOilCrackingRecipeId] = k;
                             countFactoriesByRecipe[HeavyOilCrackingRecipeId] = l;
                             
-                            var gazRemains = GetProducePerSec(PetroleumGasId) - GetConsumePerSec(PetroleumGasId) - gazReqPerSec;
+                            var gazRemains = GetDeltaPerSec(PetroleumGasId) - gazReqPerSec;
                             if (gazRemains >= 0)
                             {
-                                var heavyRemains = GetProducePerSec(HeavyOilId) - GetConsumePerSec(HeavyOilId) - heavyReqPerSec;
+                                var heavyRemains = GetDeltaPerSec(HeavyOilId) - heavyReqPerSec;
                                 if (heavyRemains >= 0)
                                 {
-                                    var lightRemains = GetProducePerSec(LightOilId) - GetConsumePerSec(LightOilId) - lightReqPerSec;
+                                    var lightRemains = GetDeltaPerSec(LightOilId) - lightReqPerSec;
                                     if (lightRemains >= 0)
                                     {
                                         if (countFactoriesByRecipeFlagged == null

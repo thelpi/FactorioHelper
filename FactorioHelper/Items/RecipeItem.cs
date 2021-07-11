@@ -8,14 +8,25 @@ namespace FactorioHelper.Items
         public IReadOnlyDictionary<int, int> SourceItems { get; set; }
         public IReadOnlyDictionary<int, int> TargetItems { get; set; }
 
+        public readonly Dictionary<int, decimal> _sourceBuildTimes = new Dictionary<int, decimal>();
+        public readonly Dictionary<int, decimal> _targetBuildTimes = new Dictionary<int, decimal>();
+
         public decimal GetTargetPerSec(int id)
         {
-            return (TargetItems.ContainsKey(id) ? TargetItems[id] : 0) / BuildTime;
+            if (!_targetBuildTimes.ContainsKey(id))
+            {
+                _targetBuildTimes.Add(id, (TargetItems.ContainsKey(id) ? TargetItems[id] : 0) / BuildTime);
+            }
+            return _targetBuildTimes[id];
         }
 
         public decimal GetSourcePerSec(int id)
         {
-            return (SourceItems.ContainsKey(id) ? SourceItems[id] : 0) / BuildTime;
+            if (!_sourceBuildTimes.ContainsKey(id))
+            {
+                _sourceBuildTimes.Add(id, (SourceItems.ContainsKey(id) ? SourceItems[id] : 0) / BuildTime);
+            }
+            return _sourceBuildTimes[id];
         }
     }
 }

@@ -94,12 +94,18 @@ namespace FactorioHelper
             decimal gazTotalRemains = 0;
             decimal heavyTotalRemains = 0;
             decimal lightTotalRemains = 0;
-            decimal crudeConsome = 0;
-            decimal waterConsome = 0;
             Dictionary<int, int> countFactoriesByRecipeFlagged = null;
+            var totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
 
             var countFactoriesByRecipe = recipes.ToDictionary(_ => _.Id, _ => 0);
-            
+
+            decimal GetConsumePerSec(int id)
+                => recipes.Sum(_ => _.GetSourcePerSec(id) * countFactoriesByRecipe[_.Id]);
+            decimal GetProducePerSec(int id)
+                => recipes.Sum(_ => _.GetTargetPerSec(id) * countFactoriesByRecipe[_.Id]);
+
+            var startDate = DateTime.Now;
+
             const int MaxAttemps = 50;
             for (int i = 0; i < MaxAttemps; i++)
             {
@@ -113,43 +119,43 @@ namespace FactorioHelper
                             countFactoriesByRecipe[AdvancedOilProcessingRecipeId] = j;
                             countFactoriesByRecipe[LightOilCrackingRecipeId] = k;
                             countFactoriesByRecipe[HeavyOilCrackingRecipeId] = l;
-
-                            decimal GetConsumePerSec(int id) => recipes.Sum(_ => _.GetSourcePerSec(id) * countFactoriesByRecipe[_.Id]);
-                            decimal GetProducePerSec(int id) => recipes.Sum(_ => _.GetTargetPerSec(id) * countFactoriesByRecipe[_.Id]);
-
-                            var gazConsumePerSec = GetConsumePerSec(PetroleumGasId);
-                            var heavyConsumePerSec = GetConsumePerSec(HeavyOilId);
-                            var lightConsumePerSec = GetConsumePerSec(LightOilId);
-                            var crudeConsumePerSec = GetConsumePerSec(CrudeOilId);
-                            var waterConsumePerSec = GetConsumePerSec(WaterId);
-
-                            var gazProducePerSec = GetProducePerSec(PetroleumGasId);
-                            var heavyProducePerSec = GetProducePerSec(HeavyOilId);
-                            var lightProducePerSec = GetProducePerSec(LightOilId);
-
-                            var gazRemains = gazProducePerSec - gazConsumePerSec - gazReqPerSec;
-                            var heavyRemains = heavyProducePerSec - heavyConsumePerSec - heavyReqPerSec;
-                            var lightRemains = lightProducePerSec - lightConsumePerSec - lightReqPerSec;
-
-                            if (gazRemains >= 0 && heavyRemains >= 0 && lightRemains >= 0)
+                            
+                            var gazRemains = GetProducePerSec(PetroleumGasId) - GetConsumePerSec(PetroleumGasId) - gazReqPerSec;
+                            if (gazRemains >= 0)
                             {
-                                if (countFactoriesByRecipeFlagged == null
-                                    || (gazTotalRemains + heavyTotalRemains + lightTotalRemains) > (gazRemains + heavyRemains + lightRemains)
-                                    || ((gazTotalRemains + heavyTotalRemains + lightTotalRemains) == (gazRemains + heavyRemains + lightRemains)
-                                    && countFactoriesByRecipe.Sum(_ => _.Value) < countFactoriesByRecipeFlagged.Sum(_ => _.Value)))
+                                var heavyRemains = GetProducePerSec(HeavyOilId) - GetConsumePerSec(HeavyOilId) - heavyReqPerSec;
+                                if (heavyRemains >= 0)
                                 {
-                                    gazTotalRemains = gazRemains;
-                                    heavyTotalRemains = heavyRemains;
-                                    lightTotalRemains = lightRemains;
-                                    crudeConsome = crudeConsumePerSec;
-                                    waterConsome = waterConsumePerSec;
-                                    countFactoriesByRecipeFlagged = countFactoriesByRecipe.ToDictionary(_ => _.Key, _ => _.Value);
+                                    var lightRemains = GetProducePerSec(LightOilId) - GetConsumePerSec(LightOilId) - lightReqPerSec;
+                                    if (lightRemains >= 0)
+                                    {
+                                        if (countFactoriesByRecipeFlagged == null
+                                            || totalRemains > (gazRemains + heavyRemains + lightRemains))
+                                        {
+                                            gazTotalRemains = gazRemains;
+                                            heavyTotalRemains = heavyRemains;
+                                            lightTotalRemains = lightRemains;
+                                            totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
+                                            countFactoriesByRecipeFlagged = new Dictionary<int, int>
+                                            {
+                                                { BasicOilProcessingRecipeId, i },
+                                                { AdvancedOilProcessingRecipeId, j },
+                                                { LightOilCrackingRecipeId, k },
+                                                { HeavyOilCrackingRecipeId, l },
+                                            };
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+
+            var totalSeconds = (DateTime.Now - startDate).TotalSeconds;
+
+            var crudeConsome = recipes.Sum(_ => _.GetSourcePerSec(CrudeOilId) * countFactoriesByRecipeFlagged[_.Id]);
+            var waterConsome = recipes.Sum(_ => _.GetSourcePerSec(WaterId) * countFactoriesByRecipeFlagged[_.Id]);
 
             fromProduction.RemoveAll(_ => _.Id == PetroleumGasId);
             fromProduction.RemoveAll(_ => _.Id == HeavyOilId);

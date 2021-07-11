@@ -85,7 +85,6 @@ namespace FactorioHelper
 
             var recipes = new[]
             {
-                GetRecipeById(BasicOilProcessingRecipeId),
                 GetRecipeById(AdvancedOilProcessingRecipeId),
                 GetRecipeById(LightOilCrackingRecipeId),
                 GetRecipeById(HeavyOilCrackingRecipeId)
@@ -102,46 +101,39 @@ namespace FactorioHelper
             decimal GetDeltaPerSec(int id) =>
                 recipes.Sum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
 
-            var startDate = DateTime.Now;
-
             const int MaxAttemps = 50;
-            for (int i = 0; i < MaxAttemps; i++)
+            for (int j = 1; j < MaxAttemps; j++) // once advanced oil processing minimum
             {
-                for (int j = 1; j < MaxAttemps; j++) // once advanced oil processing minimum
+                for (int k = 0; k < MaxAttemps; k++)
                 {
-                    for (int k = 0; k < MaxAttemps; k++)
+                    for (int l = 0; l < MaxAttemps; l++)
                     {
-                        for (int l = 0; l < MaxAttemps; l++)
-                        {
-                            countFactoriesByRecipe[BasicOilProcessingRecipeId] = i;
-                            countFactoriesByRecipe[AdvancedOilProcessingRecipeId] = j;
-                            countFactoriesByRecipe[LightOilCrackingRecipeId] = k;
-                            countFactoriesByRecipe[HeavyOilCrackingRecipeId] = l;
+                        countFactoriesByRecipe[AdvancedOilProcessingRecipeId] = j;
+                        countFactoriesByRecipe[LightOilCrackingRecipeId] = k;
+                        countFactoriesByRecipe[HeavyOilCrackingRecipeId] = l;
                             
-                            var gazRemains = GetDeltaPerSec(PetroleumGasId) - gazReqPerSec;
-                            if (gazRemains >= 0)
+                        var gazRemains = GetDeltaPerSec(PetroleumGasId) - gazReqPerSec;
+                        if (gazRemains >= 0)
+                        {
+                            var heavyRemains = GetDeltaPerSec(HeavyOilId) - heavyReqPerSec;
+                            if (heavyRemains >= 0)
                             {
-                                var heavyRemains = GetDeltaPerSec(HeavyOilId) - heavyReqPerSec;
-                                if (heavyRemains >= 0)
+                                var lightRemains = GetDeltaPerSec(LightOilId) - lightReqPerSec;
+                                if (lightRemains >= 0)
                                 {
-                                    var lightRemains = GetDeltaPerSec(LightOilId) - lightReqPerSec;
-                                    if (lightRemains >= 0)
+                                    if (countFactoriesByRecipeFlagged == null
+                                        || totalRemains > (gazRemains + heavyRemains + lightRemains))
                                     {
-                                        if (countFactoriesByRecipeFlagged == null
-                                            || totalRemains > (gazRemains + heavyRemains + lightRemains))
+                                        gazTotalRemains = gazRemains;
+                                        heavyTotalRemains = heavyRemains;
+                                        lightTotalRemains = lightRemains;
+                                        totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
+                                        countFactoriesByRecipeFlagged = new Dictionary<int, int>
                                         {
-                                            gazTotalRemains = gazRemains;
-                                            heavyTotalRemains = heavyRemains;
-                                            lightTotalRemains = lightRemains;
-                                            totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
-                                            countFactoriesByRecipeFlagged = new Dictionary<int, int>
-                                            {
-                                                { BasicOilProcessingRecipeId, i },
-                                                { AdvancedOilProcessingRecipeId, j },
-                                                { LightOilCrackingRecipeId, k },
-                                                { HeavyOilCrackingRecipeId, l },
-                                            };
-                                        }
+                                            { AdvancedOilProcessingRecipeId, j },
+                                            { LightOilCrackingRecipeId, k },
+                                            { HeavyOilCrackingRecipeId, l },
+                                        };
                                     }
                                 }
                             }
@@ -149,8 +141,6 @@ namespace FactorioHelper
                     }
                 }
             }
-
-            var totalSeconds = (DateTime.Now - startDate).TotalSeconds;
 
             var crudeConsome = recipes.Sum(_ => _.GetSourcePerSec(CrudeOilId) * countFactoriesByRecipeFlagged[_.Id]);
             var waterConsome = recipes.Sum(_ => _.GetSourcePerSec(WaterId) * countFactoriesByRecipeFlagged[_.Id]);

@@ -240,9 +240,19 @@ namespace FactorioHelper
             return fromProduction.SingleOrDefault(_ => _.Id == oilId);
         }
 
-        internal List<ProductionItem> GetItemsToProduce(decimal targetPerSec, int itemId)
+        internal List<ProductionItem> GetItemsToProduce(decimal targetPerSec, decimal targetCount, int itemId)
         {
             var itemsToProduce = GetFullListOfItemsToProduce(itemId);
+
+            if (targetPerSec == 0 && targetCount > 0)
+            {
+                if (itemId == EachSciencePackItemId)
+                {
+                    throw new ArgumentException("Target per sec is mandatory for this item.", nameof(targetPerSec));
+                }
+                var itemInfo = itemsToProduce.Find(_ => _.Id == itemId);
+                targetPerSec = targetCount / itemInfo.GetRealBuildTime(this) / itemInfo.BuildResult;
+            }
 
             var itemsResult = new List<ProductionItem>();
 

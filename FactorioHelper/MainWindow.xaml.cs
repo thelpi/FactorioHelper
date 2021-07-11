@@ -41,7 +41,7 @@ namespace FactorioHelper
 
         private void CalculateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!CheckFormInput(out decimal targetPerSec))
+            if (!CheckFormInput(out decimal targetPerSec, out decimal targetCount))
             {
                 MessageBox.Show("All fields are mandatory.", "FactorioHelper", MessageBoxButton.OK);
                 return;
@@ -55,7 +55,7 @@ namespace FactorioHelper
             _productionService.MiningBonus = MiningBonusComboBox.SelectedIndex;
             _productionService.AdvancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
 
-            var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
+            var production = _productionService.GetItemsToProduce(targetPerSec, targetCount, itemId);
             var oilProduction = _productionService.GetOilToProduce(production);
 
             ResultsListBox.ItemsSource = production;
@@ -66,20 +66,30 @@ namespace FactorioHelper
             OilResultsScrollViewer.Visibility = Visibility.Visible;
         }
 
-        private bool CheckFormInput(out decimal targetPerSec)
+        private bool CheckFormInput(out decimal targetPerSec, out decimal targetCount)
         {
+            targetCount = 0;
             targetPerSec = 0;
-            return MiningDrillTypeComboBox.SelectedIndex >= 0
-                && FurnaceTypeComboBox.SelectedIndex >= 0
-                && AssemblingTypeComboBox.SelectedIndex >= 0
-                && ItemsComboBox.SelectedIndex >= 0
-                && MiningBonusComboBox.SelectedIndex >= 0
-                && decimal.TryParse(
-                    TargetPerSecText.Text,
-                    NumberStyles.AllowDecimalPoint,
-                    CultureInfo.InvariantCulture,
-                    out targetPerSec)
-                && targetPerSec > 0;
+
+            if (MiningDrillTypeComboBox.SelectedIndex < 0
+                || FurnaceTypeComboBox.SelectedIndex < 0
+                || AssemblingTypeComboBox.SelectedIndex < 0
+                || ItemsComboBox.SelectedIndex < 0
+                || MiningBonusComboBox.SelectedIndex < 0)
+            {
+                return false;
+            }
+
+            decimal.TryParse(TargetPerSecText.Text,
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out targetPerSec);
+            decimal.TryParse(TargetMachineText.Text,
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out targetCount);
+
+            return targetPerSec > 0 || targetCount > 0;
         }
     }
 }

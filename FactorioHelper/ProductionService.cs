@@ -20,6 +20,7 @@ namespace FactorioHelper
         private const int HeavyOilCrackingRecipeId = 5;
         
         private const int EachSciencePackItemId = 0;
+        private const string EachSciencePackItemName = "Each science pack";
 
         private readonly IDataProvider _dataProvider;
 
@@ -233,7 +234,7 @@ namespace FactorioHelper
 
                 var item = itemsToProduce[i];
 
-                var itemTargetPerSec = (item.Id == itemId || (itemId == EachSciencePackItemId && GetSciencePackItems().Any(_ => _.Id == item.Id)))
+                var itemTargetPerSec = (item.Id == itemId || (itemId == EachSciencePackItemId && GetSciencePackItemIds().Contains(item.Id)))
                     ? targetPerSec
                     : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
 
@@ -266,7 +267,7 @@ namespace FactorioHelper
 
             if (withEachSciencePackItem)
             {
-                items.Insert(0, new BaseItem { Id = EachSciencePackItemId, Name = "Each science pack" });
+                items.Insert(0, new BaseItem { Id = EachSciencePackItemId, Name = EachSciencePackItemName });
             }
 
             return items;
@@ -278,7 +279,7 @@ namespace FactorioHelper
 
             if (itemId == EachSciencePackItemId)
             {
-                itemsToProduce.AddRange(GetSciencePackItems());
+                itemsToProduce.AddRange(GetSciencePackItemIds().Select(GetItemById));
             }
             else
                 itemsToProduce.Add(GetItemById(itemId));
@@ -301,60 +302,12 @@ namespace FactorioHelper
             return itemsToProduce;
         }
 
-        private IReadOnlyCollection<Item> GetSciencePackItems()
+        private IReadOnlyCollection<int> GetSciencePackItemIds()
         {
-            var items = _dataProvider
+            return _dataProvider
                 .GetDatas(
-                    $"SELECT id, name, build_time, build_result, build_type_id, is_science_pack, apply_real_requirement FROM item WHERE is_science_pack = 1",
-                    _ =>
-                    {
-                        Item localItem = null;
-
-                        var buildType = (ItemBuildType)_.Get<int>("build_type_id");
-                        switch (buildType)
-                        {
-                            case ItemBuildType.AssemblingMachine:
-                                localItem = new AssemblingItem();
-                                break;
-                            case ItemBuildType.Furnace:
-                                localItem = new FurnaceItem();
-                                break;
-                            case ItemBuildType.MiningDrill:
-                                localItem = new MiningItem();
-                                break;
-                            case ItemBuildType.Refining:
-                                localItem = new RefiningItem();
-                                break;
-                            case ItemBuildType.ChemicalPlant:
-                                localItem = new ChemicalItem();
-                                break;
-                            case ItemBuildType.Other:
-                                localItem = new OtherItem();
-                                break;
-                        }
-
-                        localItem.Id = _.Get<int>("id");
-                        localItem.Name = _.Get<string>("name");
-                        localItem.BuildResult = _.Get<int>("build_result");
-                        localItem.BuildTime = _.Get<decimal>("build_time");
-                        localItem.BuildType = buildType;
-                        localItem.IsSciencePack = _.Get<byte>("is_science_pack") != 0;
-                        localItem.ApplyRealRequirement = _.Get<byte>("apply_real_requirement") != 0;
-                        return localItem;
-                    });
-
-            foreach (var item in items)
-            {
-                item.Composition = _dataProvider
-                    .GetDatas(
-                        $"SELECT source_item_id, quantity FROM component WHERE target_item_id = {item.Id}",
-                        _ => new KeyValuePair<int, int>(
-                            _.Get<int>("source_item_id"),
-                            _.Get<int>("quantity")))
-                    .ToDictionary(_ => _.Key, _ => _.Value);
-            }
-
-            return items;
+                    "SELECT id FROM item WHERE is_science_pack = 1",
+                    _ => _.Get<int>("id"));
         }
 
         private Item GetItemById(int itemId)

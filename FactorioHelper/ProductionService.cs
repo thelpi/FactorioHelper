@@ -101,7 +101,7 @@ namespace FactorioHelper
             decimal GetDeltaPerSec(int id) =>
                 recipes.Sum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
 
-            const int MaxAttemps = 50;
+            const int MaxAttemps = 100;
             for (int j = 1; j < MaxAttemps; j++) // once advanced oil processing minimum
             {
                 for (int k = 0; k < MaxAttemps; k++)
@@ -149,28 +149,8 @@ namespace FactorioHelper
             fromProduction.RemoveAll(_ => _.Id == HeavyOilId);
             fromProduction.RemoveAll(_ => _.Id == LightOilId);
 
-            if (waterConsome > 0)
-            {
-                AddOrUpdateItemProuction(fromProduction, new KeyValuePair<int, decimal>(WaterId, waterConsome));
-            }
-            if (crudeConsome > 0)
-            {
-                AddOrUpdateItemProuction(fromProduction, new KeyValuePair<int, decimal>(CrudeOilId, crudeConsome));
-            }
-            
-            var remains = new Dictionary<int, decimal>();
-            if (gazTotalRemains > 0)
-            {
-                remains.Add(PetroleumGasId, gazTotalRemains);
-            }
-            if (heavyTotalRemains > 0)
-            {
-                remains.Add(HeavyOilId, heavyTotalRemains);
-            }
-            if (lightTotalRemains > 0)
-            {
-                remains.Add(LightOilId, lightTotalRemains);
-            }
+            AddOrUpdateItemProuction(fromProduction, new KeyValuePair<int, decimal>(WaterId, waterConsome));
+            AddOrUpdateItemProuction(fromProduction, new KeyValuePair<int, decimal>(CrudeOilId, crudeConsome));
 
             var chemicalPlantReq = new Dictionary<int, int>();
             var refineryReq = new Dictionary<int, int>();
@@ -189,12 +169,19 @@ namespace FactorioHelper
                 }
             }
 
-            return new OilProductionOutput
+            var oilOutput = new OilProductionOutput
             {
-                RemainsPerSec = remains,
+                RemainsPerSec = new Dictionary<int, decimal>
+                {
+                    { PetroleumGasId, gazTotalRemains },
+                    { HeavyOilId, heavyTotalRemains },
+                    { LightOilId, lightTotalRemains }
+                },
                 ChemicalPlantRequirements = chemicalPlantReq,
                 RefineryRequirements = refineryReq
             };
+
+            return oilOutput;
         }
 
         private void AddOrUpdateItemProuction(List<ProductionItem> fromProduction, KeyValuePair<int, decimal> sourceItem)

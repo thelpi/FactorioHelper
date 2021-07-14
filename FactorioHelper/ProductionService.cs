@@ -18,10 +18,8 @@ namespace FactorioHelper
         private const int AdvancedOilProcessingRecipeId = 2;
         private const int LightOilCrackingRecipeId = 4;
         private const int HeavyOilCrackingRecipeId = 5;
-
-        private const int SpaceSciencePackItemId = 55;
+        
         private const int EachSciencePackItemId = 0;
-        private static readonly int[] SciencePackIdList = new[] { 1, 7, 12, 21, 28, 33 };
 
         private readonly IDataProvider _dataProvider;
 
@@ -222,19 +220,9 @@ namespace FactorioHelper
             return fromProduction.SingleOrDefault(_ => _.Id == oilId);
         }
 
-        internal List<ProductionItem> GetItemsToProduce(decimal targetPerSec, decimal targetCount, int itemId)
+        internal List<ProductionItem> GetItemsToProduce(decimal targetPerSec, int itemId)
         {
             var itemsToProduce = GetFullListOfItemsToProduce(itemId);
-
-            if (targetPerSec == 0 && targetCount > 0)
-            {
-                if (itemId == EachSciencePackItemId)
-                {
-                    throw new ArgumentException("Target per sec is mandatory for this item.", nameof(targetPerSec));
-                }
-                var itemInfo = itemsToProduce.Find(_ => _.Id == itemId);
-                targetPerSec = targetCount / itemInfo.GetRealBuildTime(this) / itemInfo.BuildResult;
-            }
 
             var itemsResult = new List<ProductionItem>();
 
@@ -245,7 +233,7 @@ namespace FactorioHelper
 
                 var item = itemsToProduce[i];
 
-                var itemTargetPerSec = (item.Id == itemId || (itemId == EachSciencePackItemId && SciencePackIdList.Contains(item.Id)))
+                var itemTargetPerSec = (item.Id == itemId || (itemId == EachSciencePackItemId && GetSciencePackItems().Any(_ => _.Id == item.Id)))
                     ? targetPerSec
                     : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
 
@@ -278,7 +266,7 @@ namespace FactorioHelper
 
             if (withEachSciencePackItem)
             {
-                items.Insert(0, new BaseItem { Id = EachSciencePackItemId, Name = "Each science pack (exc. space)" });
+                items.Insert(0, new BaseItem { Id = EachSciencePackItemId, Name = "Each science pack" });
             }
 
             return items;
@@ -289,7 +277,9 @@ namespace FactorioHelper
             var itemsToProduce = new List<Item>();
 
             if (itemId == EachSciencePackItemId)
-                itemsToProduce.AddRange(SciencePackIdList.Select(_ => GetItemById(_)));
+            {
+                itemsToProduce.AddRange(GetSciencePackItems());
+            }
             else
                 itemsToProduce.Add(GetItemById(itemId));
 
@@ -311,11 +301,11 @@ namespace FactorioHelper
             return itemsToProduce;
         }
 
-        private Item GetItemById(int itemId)
+        private IReadOnlyCollection<Item> GetSciencePackItems()
         {
-            var item = _dataProvider
-                .GetData(
-                    $"SELECT id, name, build_time, build_result, build_type_id FROM item WHERE id = {itemId}",
+            var items = _dataProvider
+                .GetDatas(
+                    $"SELECT id, name, build_time, build_result, build_type_id, is_science_pack, apply_real_requirement FROM item WHERE is_science_pack = 1",
                     _ =>
                     {
                         Item localItem = null;
@@ -348,6 +338,64 @@ namespace FactorioHelper
                         localItem.BuildResult = _.Get<int>("build_result");
                         localItem.BuildTime = _.Get<decimal>("build_time");
                         localItem.BuildType = buildType;
+                        localItem.IsSciencePack = _.Get<byte>("is_science_pack") != 0;
+                        localItem.ApplyRealRequirement = _.Get<byte>("apply_real_requirement") != 0;
+                        return localItem;
+                    });
+
+            foreach (var item in items)
+            {
+                item.Composition = _dataProvider
+                    .GetDatas(
+                        $"SELECT source_item_id, quantity FROM component WHERE target_item_id = {item.Id}",
+                        _ => new KeyValuePair<int, int>(
+                            _.Get<int>("source_item_id"),
+                            _.Get<int>("quantity")))
+                    .ToDictionary(_ => _.Key, _ => _.Value);
+            }
+
+            return items;
+        }
+
+        private Item GetItemById(int itemId)
+        {
+            var item = _dataProvider
+                .GetData(
+                    $"SELECT id, name, build_time, build_result, build_type_id, is_science_pack, apply_real_requirement FROM item WHERE id = {itemId}",
+                    _ =>
+                    {
+                        Item localItem = null;
+
+                        var buildType = (ItemBuildType)_.Get<int>("build_type_id");
+                        switch (buildType)
+                        {
+                            case ItemBuildType.AssemblingMachine:
+                                localItem = new AssemblingItem();
+                                break;
+                            case ItemBuildType.Furnace:
+                                localItem = new FurnaceItem();
+                                break;
+                            case ItemBuildType.MiningDrill:
+                                localItem = new MiningItem();
+                                break;
+                            case ItemBuildType.Refining:
+                                localItem = new RefiningItem();
+                                break;
+                            case ItemBuildType.ChemicalPlant:
+                                localItem = new ChemicalItem();
+                                break;
+                            case ItemBuildType.Other:
+                                localItem = new OtherItem();
+                                break;
+                        }
+
+                        localItem.Id = _.Get<int>("id");
+                        localItem.Name = _.Get<string>("name");
+                        localItem.BuildResult = _.Get<int>("build_result");
+                        localItem.BuildTime = _.Get<decimal>("build_time");
+                        localItem.BuildType = buildType;
+                        localItem.IsSciencePack = _.Get<byte>("is_science_pack") != 0;
+                        localItem.ApplyRealRequirement = _.Get<byte>("apply_real_requirement") != 0;
                         return localItem;
                     });
 
@@ -397,7 +445,7 @@ namespace FactorioHelper
         {
             return itemsToProduce
                 .Where(_ => _.Composition.ContainsKey(item.Id))
-                .Sum(_ => (_.Composition[item.Id] * itemsResult.Single(x => x.Id == _.Id).MachineRequirement) / _.GetRealBuildTime(this));
+                .Sum(_ => (_.Composition[item.Id] * (_.ApplyRealRequirement ? itemsResult.Single(x => x.Id == _.Id).RealMachineRequirement : itemsResult.Single(x => x.Id == _.Id).MachineRequirement)) / _.GetRealBuildTime(this));
         }
 
         private void CheckSuitableItem(

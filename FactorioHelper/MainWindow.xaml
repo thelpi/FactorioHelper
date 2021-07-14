@@ -28,12 +28,8 @@
                 </ComboBox>
             </StackPanel>
             <StackPanel Margin="0, 5, 0, 0" Orientation="Horizontal">
-                <Label HorizontalContentAlignment="Right" Content="Target:" Width="100" />
+                <Label HorizontalContentAlignment="Right" Content="Target p/sec:" Width="100" />
                 <TextBox Width="50" VerticalContentAlignment="Center" Name="TargetPerSecText" />
-                <Label>(p/ sec)</Label>
-                <Label Width="54" HorizontalContentAlignment="Center">OR</Label>
-                <TextBox Width="50" VerticalContentAlignment="Center" Name="TargetMachineText" />
-                <Label>(count)</Label>
             </StackPanel>
             <StackPanel Margin="0, 15, 0, 0" Orientation="Horizontal">
                 <Label HorizontalContentAlignment="Right" Content="Furnace type:" Width="100" />

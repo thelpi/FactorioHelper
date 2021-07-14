@@ -41,7 +41,7 @@ namespace FactorioHelper
 
         private void CalculateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!CheckFormInput(out decimal targetPerSec, out decimal targetCount))
+            if (!CheckFormInput(out decimal targetPerSec))
             {
                 MessageBox.Show("All fields are mandatory.", "FactorioHelper", MessageBoxButton.OK);
                 return;
@@ -55,7 +55,7 @@ namespace FactorioHelper
             _productionService.MiningBonus = MiningBonusComboBox.SelectedIndex;
             _productionService.AdvancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
 
-            var production = _productionService.GetItemsToProduce(targetPerSec, targetCount, itemId);
+            var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
             var oilProduction = _productionService.GetOilToProduce(production);
 
             ResultsListBox.ItemsSource = production;
@@ -66,9 +66,8 @@ namespace FactorioHelper
             OilResultsScrollViewer.Visibility = Visibility.Visible;
         }
 
-        private bool CheckFormInput(out decimal targetPerSec, out decimal targetCount)
+        private bool CheckFormInput(out decimal targetPerSec)
         {
-            targetCount = 0;
             targetPerSec = 0;
 
             if (MiningDrillTypeComboBox.SelectedIndex < 0
@@ -84,12 +83,8 @@ namespace FactorioHelper
                 NumberStyles.AllowDecimalPoint,
                 CultureInfo.InvariantCulture,
                 out targetPerSec);
-            decimal.TryParse(TargetMachineText.Text,
-                NumberStyles.AllowDecimalPoint,
-                CultureInfo.InvariantCulture,
-                out targetCount);
 
-            return targetPerSec > 0 || targetCount > 0;
+            return targetPerSec > 0;
         }
     }
 }

@@ -120,6 +120,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Pictures\Modules\Efficiency.png" />
+    <Resource Include="Pictures\Modules\Productivity.png" />
+    <Resource Include="Pictures\Modules\Speed.png" />
     <Resource Include="Pictures\BuildTypes\1.png" />
     <Resource Include="Pictures\BuildTypes\2.png" />
     <Resource Include="Pictures\BuildTypes\3.png" />
@@ -189,5 +192,6 @@
     <Resource Include="Pictures\Recipes\5.png" />
     <Content Include="Scripts\factorio.sql" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

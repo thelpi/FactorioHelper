@@ -19,6 +19,7 @@ namespace FactorioHelper
         private const int LightOilCrackingRecipeId = 4;
         private const int HeavyOilCrackingRecipeId = 5;
 
+        private const int SpaceSciencePackItemId = 55;
         private const int EachSciencePackItemId = 0;
         private static readonly int[] SciencePackIdList = new[] { 1, 7, 12, 21, 28, 33 };
 
@@ -101,8 +102,12 @@ namespace FactorioHelper
             decimal GetDeltaPerSec(int id) =>
                 recipes.Sum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
 
+            var minimalHeavyFactoriesCount = heavyReqPerSec == 0
+                ? 1
+                : (int)Math.Ceiling(heavyReqPerSec / recipes.Single(_ => _.Id == AdvancedOilProcessingRecipeId).GetTargetPerSec(HeavyOilId));
+
             const int MaxAttemps = 100;
-            for (int j = 1; j < MaxAttemps; j++) // once advanced oil processing minimum
+            for (int j = minimalHeavyFactoriesCount; j < MaxAttemps; j++)
             {
                 for (int k = 0; k < MaxAttemps; k++)
                 {
@@ -273,7 +278,7 @@ namespace FactorioHelper
 
             if (withEachSciencePackItem)
             {
-                items.Insert(0, new BaseItem { Id = EachSciencePackItemId, Name = "Each science pack" });
+                items.Insert(0, new BaseItem { Id = EachSciencePackItemId, Name = "Each science pack (exc. space)" });
             }
 
             return items;

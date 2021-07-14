@@ -61,6 +61,7 @@ namespace FactorioHelper
             ResultsListBox.ItemsSource = production;
             ResultsScrollViewer.Visibility = Visibility.Visible;
 
+            OilRemainsListBox.ItemsSource = oilProduction.RemainsPerSec;
             RefineryOilResultsListBox.ItemsSource = oilProduction.RefineryRequirements;
             ChemicalOilResultsListBox.ItemsSource = oilProduction.ChemicalPlantRequirements;
             OilResultsScrollViewer.Visibility = Visibility.Visible;

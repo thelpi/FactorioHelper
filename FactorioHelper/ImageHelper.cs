@@ -9,10 +9,10 @@ namespace FactorioHelper
         {
             var image = new BitmapImage();
             image.BeginInit();
-            image.UriSource = new Uri(string.Format(@"{0}\{1}\{2}.png",
-                Properties.Settings.Default.picturesPath,
+            image.UriSource = new Uri(string.Format(@"{0}/{1}/{2}.png",
+                "Pictures",
                 subFolder,
-                value));
+                value), UriKind.Relative);
             image.EndInit();
             return image;
         }

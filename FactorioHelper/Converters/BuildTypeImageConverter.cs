@@ -8,7 +8,7 @@ namespace FactorioHelper.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return ImageHelper.GetBitmapImage("build_types", (int)value);
+            return ImageHelper.GetBitmapImage("BuildTypes", (int)value);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

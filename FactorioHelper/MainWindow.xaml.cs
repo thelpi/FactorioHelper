@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using FactorioHelper.Enums;
 using FactorioHelper.Items;
 
@@ -12,22 +14,27 @@ namespace FactorioHelper
     public partial class MainWindow : Window
     {
         private readonly ProductionService _productionService;
+        private readonly ObservableCollection<ModuleConfiguration> _modules;
 
         private Properties.Settings Settings => Properties.Settings.Default;
 
         public MainWindow()
         {
             InitializeComponent();
+
             _productionService = new ProductionService(
                 new MySqlDataProvider(
                     Settings.sqlServer,
                     Settings.sqlDatabase,
                     Settings.sqlUid,
                     Settings.sqlPwd));
+            _modules = new ObservableCollection<ModuleConfiguration>();
+
             MiningDrillTypeComboBox.ItemsSource = Enum.GetValues(typeof(MiningDrillType));
             FurnaceTypeComboBox.ItemsSource = Enum.GetValues(typeof(FurnaceType));
             AssemblingTypeComboBox.ItemsSource = Enum.GetValues(typeof(AssemblingType));
             ItemsComboBox.ItemsSource = _productionService.GetBaseItemsList(true);
+            ModulesListBox.ItemsSource = _modules;
 
             // arbitrary default values
             ItemsComboBox.SelectedIndex = 0;
@@ -35,7 +42,7 @@ namespace FactorioHelper
             FurnaceTypeComboBox.SelectedIndex = 2;
             AssemblingTypeComboBox.SelectedIndex = 1;
             MiningBonusComboBox.SelectedIndex = 2;
-            TargetPerSecText.Text = "1.2";
+            TargetPerSecText.Text = 1.2M.ToString(CultureInfo.InvariantCulture);
             AdvancedRefiningCheckBox.IsChecked = true;
         }
 
@@ -86,6 +93,56 @@ namespace FactorioHelper
                 out targetPerSec);
 
             return targetPerSec > 0;
+        }
+
+        private void AddModuleButton_Click(object sender, RoutedEventArgs e)
+        {
+            _modules.Add(new ModuleConfiguration
+            {
+                BuildType = ItemBuildType.AssemblingMachine,
+                Count = 1,
+                Module = ModuleType.Speed1
+            });
+            ModulesListBox.Visibility = Visibility.Visible;
+        }
+
+        private void RemoveModuleButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            _modules.Remove(button.DataContext as ModuleConfiguration);
+            ModulesListBox.Visibility = _modules.Count == 0
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        }
+
+        private void TextBoxModuleCount_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            if (int.TryParse(textBox.Text, out int countValue) && countValue > 0)
+            {
+                var item = textBox.DataContext as ModuleConfiguration;
+                item.Count = countValue;
+            }
+        }
+
+        private void ComboBoxItemType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var combo = sender as ComboBox;
+            if (combo.SelectedIndex > -1)
+            {
+                var item = combo.DataContext as ModuleConfiguration;
+                item.BuildType = (ItemBuildType)combo.SelectedItem;
+            }
+        }
+
+        private void ComboBoxModule_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var combo = sender as ComboBox;
+            if (combo.SelectedIndex > -1)
+            {
+                var item = combo.DataContext as ModuleConfiguration;
+                item.Module = (ModuleType)combo.SelectedItem;
+            }
         }
     }
 }

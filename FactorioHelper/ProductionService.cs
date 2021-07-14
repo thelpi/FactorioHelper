@@ -340,6 +340,9 @@ namespace FactorioHelper
                             case ItemBuildType.Other:
                                 localItem = new OtherItem();
                                 break;
+                            case ItemBuildType.RocketSilo:
+                                localItem = new RocketSiloItem();
+                                break;
                         }
 
                         localItem.Id = _.Get<int>("id");

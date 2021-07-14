@@ -5,11 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:converters="clr-namespace:FactorioHelper.Converters"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:enums="clr-namespace:FactorioHelper.Enums"
         Title="MainWindow" SizeToContent="WidthAndHeight">
     <Window.Resources>
         <converters:ItemIdImageConverter x:Key="itemIdImageConverter" />
         <converters:BuildTypeImageConverter x:Key="buildTypeImageConverter" />
         <converters:RecipeImageConverter x:Key="recipeImageConverter" />
+        <converters:ModuleImageConverter x:Key="moduleImageConverter" />
+        <ObjectDataProvider x:Key="itemBuildTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="enums:ItemBuildType"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <ObjectDataProvider x:Key="moduleTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="enums:ModuleType"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
     </Window.Resources>
     <DockPanel Margin="10">
         <Grid DockPanel.Dock="Left">
@@ -24,6 +37,8 @@
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
             </Grid.RowDefinitions>
@@ -61,7 +76,35 @@
             <ComboBox Grid.Column="1" Grid.Row="5" Height="30" VerticalContentAlignment="Center" Name="AssemblingTypeComboBox" />
             <Label Grid.Column="0" Grid.Row="6" VerticalAlignment="Center" HorizontalContentAlignment="Right" Content="Advanced oil:" />
             <CheckBox Grid.Column="1" Grid.Row="6"  Name="AdvancedRefiningCheckBox" VerticalAlignment="Center" />
-            <Button Grid.Column="0" Grid.Row="7" Grid.ColumnSpan="2" Width="200" Height="25" Content="Compute requirements" Name="CalculateButton" Click="CalculateButton_Click" />
+            <Label Grid.Column="0" Grid.Row="7" VerticalAlignment="Center" HorizontalContentAlignment="Right" Content="Modules:" />
+            <StackPanel Grid.Column="1" Grid.Row="7" Orientation="Vertical">
+                <ListBox Name="ModulesListBox" Visibility="Collapsed" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0, 5, 0, 5" Orientation="Horizontal">
+                                <ComboBox ItemsSource="{Binding Source={StaticResource itemBuildTypes}}" SelectedItem="{Binding Path=BuildType}" SelectionChanged="ComboBoxItemType_SelectionChanged">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Image Width="30" Height="30" Source="{Binding Converter={StaticResource buildTypeImageConverter}}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <ComboBox Margin="5, 0, 0, 0" ItemsSource="{Binding Source={StaticResource moduleTypes}}" SelectedItem="{Binding Path=Module}" SelectionChanged="ComboBoxModule_SelectionChanged">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Image Width="30" Height="30" Source="{Binding Converter={StaticResource moduleImageConverter}}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBox Margin="5, 0, 0, 0" Height="25" Width="25" VerticalContentAlignment="Center" Text="{Binding Path=Count}" TextChanged="TextBoxModuleCount_TextChanged"  VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                <Button Margin="5, 0, 0, 0" Height="25" Width="25" Content="X" Click="RemoveModuleButton_Click" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+            <Button Grid.Column="1" Grid.Row="8" Content="Add module" Height="25" Width="100" HorizontalAlignment="Left" Name="AddModuleButton" Click="AddModuleButton_Click" />
+            <Button Grid.Column="0" Grid.Row="9" Grid.ColumnSpan="2" Width="200" Height="25" VerticalAlignment="Bottom" Content="Compute requirements" Name="CalculateButton" Click="CalculateButton_Click" />
         </Grid>
         <ScrollViewer Name="ResultsScrollViewer" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
             <ListView Name="ResultsListBox">

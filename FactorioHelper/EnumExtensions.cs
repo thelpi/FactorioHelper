@@ -1,4 +1,7 @@
-﻿using FactorioHelper.Enums;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using FactorioHelper.Enums;
 
 namespace FactorioHelper
 {
@@ -35,6 +38,11 @@ namespace FactorioHelper
                 default: // machine 1
                     return 0.5M;
             }
+        }
+
+        public static IReadOnlyCollection<T> Values<T>()
+        {
+            return Enum.GetValues(typeof(T)).Cast<T>().ToList();
         }
     }
 }

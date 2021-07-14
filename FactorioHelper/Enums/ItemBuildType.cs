@@ -7,6 +7,7 @@
         Furnace,
         MiningDrill,
         Refining,
-        Other
+        Other,
+        RocketSilo
     }
 }

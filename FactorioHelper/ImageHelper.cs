@@ -5,7 +5,7 @@ namespace FactorioHelper
 {
     static class ImageHelper
     {
-        internal static BitmapImage GetBitmapImage(string subFolder, int value)
+        internal static BitmapImage GetBitmapImage(string subFolder, object value)
         {
             var image = new BitmapImage();
             image.BeginInit();

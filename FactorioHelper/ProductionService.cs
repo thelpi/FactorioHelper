@@ -22,6 +22,15 @@ namespace FactorioHelper
         private const int EachSciencePackItemId = 0;
         private const string EachSciencePackItemName = "Each science pack";
 
+        private static IReadOnlyDictionary<ItemBuildType, Func<Item, Item>> SpecificItemTypes =
+            new Dictionary<ItemBuildType, Func<Item, Item>>
+            {
+                { ItemBuildType.AssemblingMachine, x => x.ToItem<AssemblingItem>() },
+                { ItemBuildType.Furnace, x => x.ToItem<FurnaceItem>() },
+                { ItemBuildType.MiningDrill, x => x.ToItem<MiningItem>() },
+                { ItemBuildType.Refining, x => x.ToItem<RefiningItem>() }
+            };
+
         private readonly IDataProvider _dataProvider;
 
         public FurnaceType FurnaceType { get; set; }
@@ -317,42 +326,20 @@ namespace FactorioHelper
                     $"SELECT id, name, build_time, build_result, build_type_id, is_science_pack, apply_real_requirement FROM item WHERE id = {itemId}",
                     _ =>
                     {
-                        Item localItem = null;
-
-                        var buildType = (ItemBuildType)_.Get<int>("build_type_id");
-                        switch (buildType)
+                        var localItem = new Item
                         {
-                            case ItemBuildType.AssemblingMachine:
-                                localItem = new AssemblingItem();
-                                break;
-                            case ItemBuildType.Furnace:
-                                localItem = new FurnaceItem();
-                                break;
-                            case ItemBuildType.MiningDrill:
-                                localItem = new MiningItem();
-                                break;
-                            case ItemBuildType.Refining:
-                                localItem = new RefiningItem();
-                                break;
-                            case ItemBuildType.ChemicalPlant:
-                                localItem = new ChemicalItem();
-                                break;
-                            case ItemBuildType.Other:
-                                localItem = new OtherItem();
-                                break;
-                            case ItemBuildType.RocketSilo:
-                                localItem = new RocketSiloItem();
-                                break;
-                        }
+                            Id = _.Get<int>("id"),
+                            Name = _.Get<string>("name"),
+                            BuildResult = _.Get<int>("build_result"),
+                            BuildTime = _.Get<decimal>("build_time"),
+                            BuildType = (ItemBuildType)_.Get<int>("build_type_id"),
+                            IsSciencePack = _.Get<byte>("is_science_pack") != 0,
+                            ApplyRealRequirement = _.Get<byte>("apply_real_requirement") != 0
+                        };
 
-                        localItem.Id = _.Get<int>("id");
-                        localItem.Name = _.Get<string>("name");
-                        localItem.BuildResult = _.Get<int>("build_result");
-                        localItem.BuildTime = _.Get<decimal>("build_time");
-                        localItem.BuildType = buildType;
-                        localItem.IsSciencePack = _.Get<byte>("is_science_pack") != 0;
-                        localItem.ApplyRealRequirement = _.Get<byte>("apply_real_requirement") != 0;
-                        return localItem;
+                        return SpecificItemTypes.ContainsKey(localItem.BuildType)
+                            ? SpecificItemTypes[localItem.BuildType](localItem)
+                            : localItem;
                     });
 
             item.Composition = _dataProvider

@@ -38,10 +38,33 @@ namespace FactorioHelper
         public int MiningBonus { get; set; }
         public AssemblingType AssemblingType { get; set; }
         public bool AdvancedOilProcessing { get; set; }
+        public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> StandardModulesConfiguration { get; private set; }
+        public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> OilRecipesModulesConfiguration { get; private set; }
+
 
         internal ProductionService(IDataProvider dataProvider)
         {
             _dataProvider = dataProvider;
+        }
+
+        internal void SetModulesConfiguration(IReadOnlyCollection<ModuleConfiguration> modulesConfiguration)
+        {
+            StandardModulesConfiguration = modulesConfiguration
+                .Where(x => x.BuildType != ItemBuildType.Refining && x.BuildType != ItemBuildType.Other)
+                .GroupBy(x => x.BuildType)
+                .ToDictionary(x => x.Key, x => x
+                    .GroupBy(y => y.Module)
+                    .Select(y => new KeyValuePair<ModuleType, int>(y.Key, y.Sum(z => z.Count)))
+                    .ToList()
+                    as IReadOnlyCollection<KeyValuePair<ModuleType, int>>);
+            OilRecipesModulesConfiguration = modulesConfiguration
+                .Where(x => x.BuildType == ItemBuildType.Refining || x.BuildType == ItemBuildType.ChemicalPlant)
+                .GroupBy(x => x.BuildType)
+                .ToDictionary(x => x.Key, x => x
+                    .GroupBy(y => y.Module)
+                    .Select(y => new KeyValuePair<ModuleType, int>(y.Key, y.Sum(z => z.Count)))
+                    .ToList()
+                    as IReadOnlyCollection<KeyValuePair<ModuleType, int>>);
         }
 
         internal OilProductionOutput GetOilToProduce(List<ProductionItem> fromProduction)
@@ -201,7 +224,7 @@ namespace FactorioHelper
         {
             var itembaseInfo = GetItemById(sourceItem.Key);
             var existingItem = fromProduction.FirstOrDefault(_ => _.Id == sourceItem.Key);
-            var timeRate = itembaseInfo.GetRealBuildTime(this) / itembaseInfo.BuildResult;
+            var timeRate = itembaseInfo.GetProductionRate(this);
             if (existingItem == null)
             {
                 fromProduction.Add(new ProductionItem
@@ -247,7 +270,7 @@ namespace FactorioHelper
                     ? targetPerSec
                     : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
 
-                var rate = item.GetRealBuildTime(this) / item.BuildResult;
+                var rate = item.GetProductionRate(this);
 
                 itemsResult.Add(new ProductionItem
                 {

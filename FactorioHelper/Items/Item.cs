@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace FactorioHelper.Items
 {
@@ -10,7 +11,23 @@ namespace FactorioHelper.Items
         public bool IsSciencePack { get; set; }
         public bool ApplyRealRequirement { get; set; }
 
-        public virtual decimal GetRealBuildTime(ProductionService productionService) => BuildTime;
+        public virtual decimal GetRealBuildTime(ProductionService productionService)
+        {
+            var rate = GetSpeedModuleRate(productionService);
+            return rate >= 1
+                ? BuildTime / rate
+                : BuildTime * (1 - rate);
+        }
+
+        public decimal GetRealBuildResult(ProductionService productionService)
+        {
+            return BuildResult + (BuildResult * GetProductivityModuleBonus(productionService));
+        }
+
+        public decimal GetProductionRate(ProductionService productionService)
+        {
+            return GetRealBuildTime(productionService) / GetRealBuildResult(productionService);
+        }
 
         public T ToItem<T>() where T : Item, new()
         {
@@ -25,6 +42,22 @@ namespace FactorioHelper.Items
                 IsSciencePack = IsSciencePack,
                 ApplyRealRequirement = ApplyRealRequirement,
             };
+        }
+
+        protected decimal GetSpeedModuleRate(ProductionService productionService)
+        {
+            var rate = productionService.StandardModulesConfiguration.ContainsKey(BuildType)
+                ? productionService.StandardModulesConfiguration[BuildType].Sum(_ => _.Key.GetSpeedBonus() * _.Value)
+                : 0;
+            return rate;
+        }
+
+        protected decimal GetProductivityModuleBonus(ProductionService productionService)
+        {
+            var rate = productionService.StandardModulesConfiguration.ContainsKey(BuildType)
+                ? productionService.StandardModulesConfiguration[BuildType].Sum(_ => _.Key.GetProductivityBonus() * _.Value)
+                : 0;
+            return rate;
         }
     }
 }

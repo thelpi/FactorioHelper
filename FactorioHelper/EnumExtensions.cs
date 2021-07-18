@@ -44,5 +44,35 @@ namespace FactorioHelper
         {
             return Enum.GetValues(typeof(T)).Cast<T>().ToList();
         }
+
+        public static decimal GetSpeedBonus(this ModuleType moduleType)
+        {
+            if (moduleType == ModuleType.Speed1)
+                return 0.2M;
+            else if (moduleType == ModuleType.Speed2)
+                return 0.3M;
+            else if (moduleType == ModuleType.Speed3)
+                return 0.5M;
+            else if (moduleType == ModuleType.Productivity1)
+                return -0.05M;
+            else if (moduleType == ModuleType.Productivity2)
+                return -0.10M;
+            else if (moduleType == ModuleType.Productivity3)
+                return -0.15M;
+            else
+                return 0;
+        }
+
+        public static decimal GetProductivityBonus(this ModuleType moduleType)
+        {
+            if (moduleType == ModuleType.Productivity1)
+                return 0.04M;
+            else if (moduleType == ModuleType.Productivity2)
+                return 0.06M;
+            else if (moduleType == ModuleType.Productivity3)
+                return 0.10M;
+            else
+                return 0;
+        }
     }
 }

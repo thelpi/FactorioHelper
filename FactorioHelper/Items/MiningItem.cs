@@ -4,7 +4,11 @@
     {
         public override decimal GetRealBuildTime(ProductionService productionService)
         {
-            return BuildTime / productionService.MiningDrillType.GetRate(productionService.MiningBonus);
+            var sourceRate = BuildTime / productionService.MiningDrillType.GetRate(productionService.MiningBonus);
+            var rate = GetSpeedModuleRate(productionService);
+            return rate >= 1
+                ? sourceRate / rate
+                : sourceRate * (1 - rate);
         }
     }
 }

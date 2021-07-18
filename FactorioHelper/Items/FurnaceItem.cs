@@ -4,7 +4,11 @@
     {
         public override decimal GetRealBuildTime(ProductionService productionService)
         {
-            return BuildTime / productionService.FurnaceType.GetRate();
+            var sourceRate = BuildTime / productionService.FurnaceType.GetRate();
+            var rate = GetSpeedModuleRate(productionService);
+            return rate >= 1
+                ? sourceRate / rate
+                : sourceRate * (1 - rate);
         }
     }
 }

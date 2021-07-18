@@ -61,6 +61,7 @@ namespace FactorioHelper
             _productionService.MiningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
             _productionService.MiningBonus = MiningBonusComboBox.SelectedIndex;
             _productionService.AdvancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
+            _productionService.SetModulesConfiguration(_modules);
 
             var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
             var oilProduction = _productionService.GetOilToProduce(production);

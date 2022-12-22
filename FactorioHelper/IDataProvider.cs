@@ -4,7 +4,7 @@ using System.Data;
 
 namespace FactorioHelper
 {
-    interface IDataProvider
+    internal interface IDataProvider
     {
         IReadOnlyCollection<T> GetDatas<T>(string query, Func<IDataReader, T> converter);
 

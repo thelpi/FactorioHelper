@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace FactorioHelper.Items
 {
-    class Item : BaseItem
+    internal class Item : BaseItem
     {
         public decimal BuildTime { get; set; }
         public int BuildResult { get; set; }

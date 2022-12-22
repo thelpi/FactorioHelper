@@ -1,6 +1,6 @@
 ﻿namespace FactorioHelper.Enums
 {
-    enum ModuleType
+    internal enum ModuleType
     {
         Efficiency1,
         Efficiency2,

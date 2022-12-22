@@ -48,7 +48,7 @@ namespace FactorioHelper
 
         private void CalculateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!CheckFormInput(out decimal targetPerSec))
+            if (!CheckFormInput(out var targetPerSec))
             {
                 MessageBox.Show("All fields are mandatory.", "FactorioHelper", MessageBoxButton.OK);
                 return;
@@ -119,7 +119,7 @@ namespace FactorioHelper
         private void TextBoxModuleCount_TextChanged(object sender, TextChangedEventArgs e)
         {
             var textBox = sender as TextBox;
-            if (int.TryParse(textBox.Text, out int countValue) && countValue > 0)
+            if (int.TryParse(textBox.Text, out var countValue) && countValue > 0)
             {
                 var item = textBox.DataContext as ModuleConfiguration;
                 item.Count = countValue;

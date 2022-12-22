@@ -5,7 +5,7 @@ using FactorioHelper.Enums;
 
 namespace FactorioHelper
 {
-    static class EnumExtensions
+    internal static class EnumExtensions
     {
         public static decimal GetRate(this FurnaceType furnaceType)
         {

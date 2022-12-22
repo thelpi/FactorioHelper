@@ -5,7 +5,7 @@ using FactorioHelper.Enums;
 
 namespace FactorioHelper.Converters
 {
-    class ModuleImageConverter : IValueConverter
+    internal class ModuleImageConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

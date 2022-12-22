@@ -4,7 +4,7 @@ using System.Windows.Data;
 
 namespace FactorioHelper.Converters
 {
-    class BuildTypeImageConverter : IValueConverter
+    internal class BuildTypeImageConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

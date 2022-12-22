@@ -2,7 +2,7 @@
 
 namespace FactorioHelper
 {
-    class OilProductionOutput
+    internal class OilProductionOutput
     {
         public IReadOnlyDictionary<int, decimal> RemainsPerSec { get; set; }
         public IReadOnlyDictionary<int, int> ChemicalPlantRequirements { get; set; }

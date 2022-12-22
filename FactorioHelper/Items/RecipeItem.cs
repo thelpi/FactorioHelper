@@ -2,7 +2,7 @@
 
 namespace FactorioHelper.Items
 {
-    class RecipeItem : BaseItem
+    internal class RecipeItem : BaseItem
     {
         public decimal BuildTime { get; set; }
         public IReadOnlyDictionary<int, int> SourceItems { get; set; }

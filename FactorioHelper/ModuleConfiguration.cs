@@ -2,7 +2,7 @@
 
 namespace FactorioHelper
 {
-    class ModuleConfiguration
+    internal class ModuleConfiguration
     {
         public ItemBuildType BuildType { get; set; }
         public ModuleType Module { get; set; }

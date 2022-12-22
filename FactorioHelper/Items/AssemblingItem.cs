@@ -1,6 +1,6 @@
 ﻿namespace FactorioHelper.Items
 {
-    class AssemblingItem : Item
+    internal class AssemblingItem : Item
     {
         public override decimal GetRealBuildTime(ProductionService productionService)
         {

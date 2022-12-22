@@ -3,7 +3,7 @@ using System.Windows.Media.Imaging;
 
 namespace FactorioHelper
 {
-    static class ImageHelper
+    internal static class ImageHelper
     {
         internal static BitmapImage GetBitmapImage(string subFolder, object value)
         {

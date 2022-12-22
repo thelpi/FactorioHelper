@@ -5,7 +5,7 @@ using MySql.Data.MySqlClient;
 
 namespace FactorioHelper
 {
-    class MySqlDataProvider : IDataProvider
+    internal class MySqlDataProvider : IDataProvider
     {
         private const string ConnectionStringFormat = "Server={0};Database={1};Uid={2};Pwd={3};";
 
@@ -35,7 +35,7 @@ namespace FactorioHelper
                 }
             }
 
-            return default(T);
+            return default;
         }
 
         public IReadOnlyCollection<T> GetDatas<T>(string query, Func<IDataReader, T> converter)
@@ -63,11 +63,11 @@ namespace FactorioHelper
         }
     }
 
-    static class SqlExtensions
+    internal static class SqlExtensions
     {
-        public static T Get<T>(this IDataReader reader, string columnName, T defaultValue = default(T))
+        public static T Get<T>(this IDataReader reader, string columnName, T defaultValue = default)
         {
-            object value = reader[columnName];
+            var value = reader[columnName];
             if (value == null || value == DBNull.Value)
             {
                 return defaultValue;

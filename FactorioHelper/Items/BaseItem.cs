@@ -2,7 +2,7 @@
 
 namespace FactorioHelper.Items
 {
-    class BaseItem
+    internal class BaseItem
     {
         public int Id { get; set; }
         public string Name { get; set; }

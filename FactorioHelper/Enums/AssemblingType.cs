@@ -1,6 +1,6 @@
 ﻿namespace FactorioHelper.Enums
 {
-    enum AssemblingType
+    internal enum AssemblingType
     {
         Machine1,
         Machine2,

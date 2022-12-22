@@ -6,7 +6,7 @@ using FactorioHelper.Items;
 
 namespace FactorioHelper
 {
-    class ProductionService
+    internal class ProductionService
     {
         private const int PetroleumGasId = 26;
         private const int HeavyOilId = 41;
@@ -18,11 +18,11 @@ namespace FactorioHelper
         private const int AdvancedOilProcessingRecipeId = 2;
         private const int LightOilCrackingRecipeId = 4;
         private const int HeavyOilCrackingRecipeId = 5;
-        
+
         private const int EachSciencePackItemId = 0;
         private const string EachSciencePackItemName = "Each science pack";
 
-        private static IReadOnlyDictionary<ItemBuildType, Func<Item, Item>> SpecificItemTypes =
+        private static readonly IReadOnlyDictionary<ItemBuildType, Func<Item, Item>> SpecificItemTypes =
             new Dictionary<ItemBuildType, Func<Item, Item>>
             {
                 { ItemBuildType.AssemblingMachine, x => x.ToItem<AssemblingItem>() },
@@ -91,11 +91,11 @@ namespace FactorioHelper
             if (!AdvancedOilProcessing)
             {
                 var basicOilProcessingRecipe = GetRecipeById(BasicOilProcessingRecipeId);
-                
+
                 var gazProdPerSec = basicOilProcessingRecipe.GetTargetPerSec(PetroleumGasId);
-                
+
                 var refineryCountReq = (int)Math.Ceiling(gazReqPerSec / gazProdPerSec);
-                
+
                 fromProduction.RemoveAll(_ => _.Id == PetroleumGasId);
 
                 var sourceItems = basicOilProcessingRecipe.SourceItems
@@ -130,24 +130,26 @@ namespace FactorioHelper
 
             var countFactoriesByRecipe = recipes.ToDictionary(_ => _.Id, _ => 0);
 
-            decimal GetDeltaPerSec(int id) =>
-                recipes.Sum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
+            decimal GetDeltaPerSec(int id)
+            {
+                return recipes.Sum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
+            }
 
             var minimalHeavyFactoriesCount = heavyReqPerSec == 0
                 ? 1
                 : (int)Math.Ceiling(heavyReqPerSec / recipes.Single(_ => _.Id == AdvancedOilProcessingRecipeId).GetTargetPerSec(HeavyOilId));
 
             const int MaxAttemps = 100;
-            for (int j = minimalHeavyFactoriesCount; j < MaxAttemps; j++)
+            for (var j = minimalHeavyFactoriesCount; j < MaxAttemps; j++)
             {
-                for (int k = 0; k < MaxAttemps; k++)
+                for (var k = 0; k < MaxAttemps; k++)
                 {
-                    for (int l = 0; l < MaxAttemps; l++)
+                    for (var l = 0; l < MaxAttemps; l++)
                     {
                         countFactoriesByRecipe[AdvancedOilProcessingRecipeId] = j;
                         countFactoriesByRecipe[LightOilCrackingRecipeId] = k;
                         countFactoriesByRecipe[HeavyOilCrackingRecipeId] = l;
-                            
+
                         var gazRemains = GetDeltaPerSec(PetroleumGasId) - gazReqPerSec;
                         if (gazRemains >= 0)
                         {
@@ -382,12 +384,12 @@ namespace FactorioHelper
                 .GetData(
                     $"SELECT id, name, build_time, build_type_id FROM recipe WHERE id = {recipeId}",
                     _ => new RecipeItem
-                   {
-                       BuildTime = _.Get<decimal>("build_time"),
-                       BuildType = (ItemBuildType)_.Get<int>("build_type_id"),
-                       Id = _.Get<int>("id"),
-                       Name = _.Get<string>("name")
-                   });
+                    {
+                        BuildTime = _.Get<decimal>("build_time"),
+                        BuildType = (ItemBuildType)_.Get<int>("build_type_id"),
+                        Id = _.Get<int>("id"),
+                        Name = _.Get<string>("name")
+                    });
 
             recipe.SourceItems = _dataProvider
                 .GetDatas(

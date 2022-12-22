@@ -2,7 +2,7 @@
 
 namespace FactorioHelper.Items
 {
-    class ProductionItem : BaseItem
+    internal class ProductionItem : BaseItem
     {
         public int MachineRequirement => (int)Math.Ceiling(RealMachineRequirement);
         public decimal RealMachineRequirement { get; set; }

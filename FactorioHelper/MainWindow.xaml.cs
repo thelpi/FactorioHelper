@@ -33,7 +33,7 @@ namespace FactorioHelper
             MiningDrillTypeComboBox.ItemsSource = Enum.GetValues(typeof(MiningDrillType));
             FurnaceTypeComboBox.ItemsSource = Enum.GetValues(typeof(FurnaceType));
             AssemblingTypeComboBox.ItemsSource = Enum.GetValues(typeof(AssemblingType));
-            ItemsComboBox.ItemsSource = _productionService.GetBaseItemsList(true);
+            ItemsComboBox.ItemsSource = _productionService.GetBaseItemsList();
             ModulesListBox.ItemsSource = _modules;
 
             // arbitrary default values

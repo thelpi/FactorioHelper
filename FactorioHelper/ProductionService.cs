@@ -19,8 +19,25 @@ namespace FactorioHelper
         private const int LightOilCrackingRecipeId = 4;
         private const int HeavyOilCrackingRecipeId = 5;
 
-        private const int EachSciencePackItemId = 0;
-        private const string EachSciencePackItemName = "Each science pack";
+        private static readonly IReadOnlyDictionary<int, string> SciencePackGroups = new Dictionary<int, string>
+        {
+            { -1, "AL packs" },
+            { -2, "ALM packs" },
+            { -3, "ALMC packs" },
+            { -4, "ALMCP packs" },
+            { -5, "ALMCPU packs" },
+            { -6, "ALMCPUS packs" }
+        };
+
+        private static readonly IReadOnlyDictionary<int, int[]> SciencePackGroupsItems = new Dictionary<int, int[]>
+        {
+            { -1, new[] { 1, 7 } },
+            { -2, new[] { 1, 7, 12 } },
+            { -3, new[] { 1, 7, 12, 21 } },
+            { -4, new[] { 1, 7, 12, 21, 28 } },
+            { -5, new[] { 1, 7, 12, 21, 28, 33 } },
+            { -6, new[] { 1, 7, 12, 21, 28, 33, 55 } }
+        };
 
         private static readonly IReadOnlyDictionary<ItemBuildType, Func<Item, Item>> SpecificItemTypes =
             new Dictionary<ItemBuildType, Func<Item, Item>>
@@ -268,7 +285,7 @@ namespace FactorioHelper
 
                 var item = itemsToProduce[i];
 
-                var itemTargetPerSec = (item.Id == itemId || (itemId == EachSciencePackItemId && GetSciencePackItemIds().Contains(item.Id)))
+                var itemTargetPerSec = (item.Id == itemId || (itemId < 0 && GetSciencePackItemIds(itemId).Contains(item.Id)))
                     ? targetPerSec
                     : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
 
@@ -288,7 +305,7 @@ namespace FactorioHelper
             return itemsResult;
         }
 
-        internal IReadOnlyCollection<BaseItem> GetBaseItemsList(bool withEachSciencePackItem)
+        internal IReadOnlyCollection<BaseItem> GetBaseItemsList()
         {
             var items = _dataProvider
                 .GetDatas(
@@ -299,9 +316,9 @@ namespace FactorioHelper
                         Name = _.Get<string>("name")
                     }).ToList();
 
-            if (withEachSciencePackItem)
+            foreach (var spgId in SciencePackGroups.Keys)
             {
-                items.Insert(0, new BaseItem { Id = EachSciencePackItemId, Name = EachSciencePackItemName });
+                items.Insert(0, new BaseItem { Id = spgId, Name = SciencePackGroups[spgId] });
             }
 
             return items;
@@ -311,9 +328,9 @@ namespace FactorioHelper
         {
             var itemsToProduce = new List<Item>();
 
-            if (itemId == EachSciencePackItemId)
+            if (itemId < 0)
             {
-                itemsToProduce.AddRange(GetSciencePackItemIds().Select(GetItemById));
+                itemsToProduce.AddRange(GetSciencePackItemIds(itemId).Select(GetItemById));
             }
             else
                 itemsToProduce.Add(GetItemById(itemId));
@@ -336,12 +353,14 @@ namespace FactorioHelper
             return itemsToProduce;
         }
 
-        private IReadOnlyCollection<int> GetSciencePackItemIds()
+        private IReadOnlyCollection<int> GetSciencePackItemIds(int sciencePackItemGroupId)
         {
             return _dataProvider
                 .GetDatas(
                     "SELECT id FROM item WHERE is_science_pack = 1",
-                    _ => _.Get<int>("id"));
+                    _ => _.Get<int>("id"))
+                .Where(x => SciencePackGroupsItems[sciencePackItemGroupId].Contains(x))
+                .ToList();
         }
 
         private Item GetItemById(int itemId)
@@ -413,7 +432,7 @@ namespace FactorioHelper
         {
             return itemsToProduce
                 .Where(_ => _.Composition.ContainsKey(item.Id))
-                .Sum(_ => (_.Composition[item.Id] * (_.ApplyRealRequirement ? itemsResult.Single(x => x.Id == _.Id).RealMachineRequirement : itemsResult.Single(x => x.Id == _.Id).MachineRequirement)) / _.GetRealBuildTime(this));
+                .Sum(_ => _.Composition[item.Id] * (_.ApplyRealRequirement ? itemsResult.Single(x => x.Id == _.Id).RealMachineRequirement : itemsResult.Single(x => x.Id == _.Id).MachineRequirement) / _.GetRealBuildTime(this));
         }
 
         private void CheckSuitableItem(

@@ -137,7 +137,7 @@
     <Resource Include="Pictures\BuildTypes\4.png" />
     <Resource Include="Pictures\BuildTypes\5.png" />
     <Resource Include="Pictures\BuildTypes\6.png" />
-    <Resource Include="Pictures\Items\0.png" />
+    <Resource Include="Pictures\Items\-1.png" />
     <Resource Include="Pictures\Items\1.png" />
     <Resource Include="Pictures\Items\10.png" />
     <Resource Include="Pictures\Items\11.png" />
@@ -198,6 +198,11 @@
     <Resource Include="Pictures\Recipes\3.png" />
     <Resource Include="Pictures\Recipes\4.png" />
     <Resource Include="Pictures\Recipes\5.png" />
+    <Resource Include="Pictures\Items\-2.png" />
+    <Resource Include="Pictures\Items\-3.png" />
+    <Resource Include="Pictures\Items\-4.png" />
+    <Resource Include="Pictures\Items\-5.png" />
+    <Resource Include="Pictures\Items\-6.png" />
     <Content Include="Scripts\factorio.sql" />
   </ItemGroup>
   <ItemGroup />

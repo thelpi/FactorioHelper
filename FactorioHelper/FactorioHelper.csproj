@@ -71,6 +71,7 @@
     <Compile Include="Converters\RecipeImageConverter.cs" />
     <Compile Include="EnumExtensions.cs" />
     <Compile Include="Enums\ModuleType.cs" />
+    <Compile Include="Fraction.cs" />
     <Compile Include="ImageHelper.cs" />
     <Compile Include="Enums\AssemblingType.cs" />
     <Compile Include="Enums\FurnaceType.cs" />

@@ -7,7 +7,7 @@
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:enums="clr-namespace:FactorioHelper.Enums"
-        Title="MainWindow" SizeToContent="WidthAndHeight">
+        Title="MainWindow" SizeToContent="Width">
     <Window.Resources>
         <converters:ItemIdImageConverter x:Key="itemIdImageConverter" />
         <converters:BuildTypeImageConverter x:Key="buildTypeImageConverter" />

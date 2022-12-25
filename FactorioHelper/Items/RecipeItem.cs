@@ -8,11 +8,11 @@ namespace FactorioHelper.Items
         public IReadOnlyDictionary<int, int> SourceItems { get; set; }
         public IReadOnlyDictionary<int, int> TargetItems { get; set; }
 
-        public readonly Dictionary<int, decimal> _sourceBuildTimes = new Dictionary<int, decimal>();
-        public readonly Dictionary<int, decimal> _targetBuildTimes = new Dictionary<int, decimal>();
-        public readonly Dictionary<int, decimal> _deltaBuildTimes = new Dictionary<int, decimal>();
+        public readonly Dictionary<int, Fraction> _sourceBuildTimes = new Dictionary<int, Fraction>();
+        public readonly Dictionary<int, Fraction> _targetBuildTimes = new Dictionary<int, Fraction>();
+        public readonly Dictionary<int, Fraction> _deltaBuildTimes = new Dictionary<int, Fraction>();
 
-        public decimal GetTargetPerSec(int id)
+        public Fraction GetTargetPerSec(int id)
         {
             if (!_targetBuildTimes.ContainsKey(id))
             {
@@ -21,7 +21,7 @@ namespace FactorioHelper.Items
             return _targetBuildTimes[id];
         }
 
-        public decimal GetSourcePerSec(int id)
+        public Fraction GetSourcePerSec(int id)
         {
             if (!_sourceBuildTimes.ContainsKey(id))
             {
@@ -30,7 +30,7 @@ namespace FactorioHelper.Items
             return _sourceBuildTimes[id];
         }
 
-        public decimal GetDeltaPerSec(int id)
+        public Fraction GetDeltaPerSec(int id)
         {
             if (!_deltaBuildTimes.ContainsKey(id))
             {

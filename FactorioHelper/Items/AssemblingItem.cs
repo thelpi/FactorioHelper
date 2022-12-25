@@ -2,7 +2,7 @@
 {
     internal class AssemblingItem : Item
     {
-        public override decimal GetRealBuildTime(ProductionService productionService)
+        public override Fraction GetRealBuildTime(ProductionService productionService)
         {
             var sourceRate = BuildTime / productionService.AssemblingType.GetRate();
             var rate = GetSpeedModuleRate(productionService);

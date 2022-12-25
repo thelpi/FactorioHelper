@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace FactorioHelper
 {
     public struct Fraction
     {
-        private static bool ApplyCtorReduce = true;
+        private const bool ApplyCtorReduce = true;
 
         private int _num;
         private int _den;
@@ -61,9 +62,9 @@ namespace FactorioHelper
         public static Fraction operator *(Fraction a, int b)
             => new Fraction(a._num * b, a._den * 1);
         public static Fraction operator -(Fraction a, int b)
-            => a + (-b);
+            => a - new Fraction(b);
         public static Fraction operator -(int a, Fraction b)
-            => b + (-a);
+            => new Fraction(a) - b;
 
         public static bool operator ==(Fraction a, int value)
             => a.Decimal == value;
@@ -92,7 +93,7 @@ namespace FactorioHelper
             => a.Decimal < value;
 
         public override string ToString()
-            => $"{_num} / {_den}";
+            => Math.Round(Decimal, 3).ToString();
 
         public static bool operator ==(Fraction a, Fraction b)
             => a.Equals(b);
@@ -102,7 +103,7 @@ namespace FactorioHelper
         public Fraction Reduce()
         {
             var denMiddle = _den / 2;
-            for (var dm = denMiddle; denMiddle > 1; denMiddle--)
+            for (var dm = denMiddle; dm > 1; dm--)
             {
                 if (_num % dm == 0 && _den % dm == 0)
                 {
@@ -137,6 +138,21 @@ namespace FactorioHelper
         public override int GetHashCode()
         {
             return _num ^ _den;
+        }
+
+        public static implicit operator Fraction(int b) => new Fraction(b);
+
+        public static implicit operator Fraction(decimal b) => new Fraction(b);
+    }
+
+    public static class LinqExtensions
+    {
+        public static Fraction FractionSum<T>(this IEnumerable<T> collection, Func<T, Fraction> projectionFunc)
+        {
+            var value = new Fraction(0);
+            foreach (var item in collection)
+                value += projectionFunc(item);
+            return value;
         }
     }
 }

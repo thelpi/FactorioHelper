@@ -2,7 +2,7 @@
 {
     internal class RefiningItem : Item
     {
-        public override decimal GetRealBuildTime(ProductionService productionService)
+        public override Fraction GetRealBuildTime(ProductionService productionService)
         {
             // to display the quantity required by sec on the main screen
             // (realtime / buildresult = 1)

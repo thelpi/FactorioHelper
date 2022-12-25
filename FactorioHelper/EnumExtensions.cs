@@ -7,7 +7,7 @@ namespace FactorioHelper
 {
     internal static class EnumExtensions
     {
-        public static decimal GetRate(this FurnaceType furnaceType)
+        public static Fraction GetRate(this FurnaceType furnaceType)
         {
             switch (furnaceType)
             {
@@ -19,7 +19,7 @@ namespace FactorioHelper
             }
         }
 
-        public static decimal GetRate(this MiningDrillType miningDrillType, int bonus)
+        public static Fraction GetRate(this MiningDrillType miningDrillType, int bonus)
         {
             var baseRate = miningDrillType == MiningDrillType.Burner
                 ? 0.25M
@@ -27,7 +27,7 @@ namespace FactorioHelper
             return baseRate + (baseRate * bonus * 0.1M);
         }
 
-        public static decimal GetRate(this AssemblingType assemblingType)
+        public static Fraction GetRate(this AssemblingType assemblingType)
         {
             switch (assemblingType)
             {
@@ -45,7 +45,7 @@ namespace FactorioHelper
             return Enum.GetValues(typeof(T)).Cast<T>().ToList();
         }
 
-        public static decimal GetSpeedBonus(this ModuleType moduleType)
+        public static Fraction GetSpeedBonus(this ModuleType moduleType)
         {
             if (moduleType == ModuleType.Speed1)
                 return 0.2M;

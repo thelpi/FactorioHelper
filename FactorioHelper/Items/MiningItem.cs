@@ -2,7 +2,7 @@
 {
     internal class MiningItem : Item
     {
-        public override decimal GetRealBuildTime(ProductionService productionService)
+        public override Fraction GetRealBuildTime(ProductionService productionService)
         {
             var sourceRate = BuildTime / productionService.MiningDrillType.GetRate(productionService.MiningBonus);
             var rate = GetSpeedModuleRate(productionService);

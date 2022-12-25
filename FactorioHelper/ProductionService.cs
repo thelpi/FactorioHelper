@@ -67,7 +67,7 @@ namespace FactorioHelper
         internal void SetModulesConfiguration(IReadOnlyCollection<ModuleConfiguration> modulesConfiguration)
         {
             StandardModulesConfiguration = modulesConfiguration
-                .Where(x => x.BuildType != ItemBuildType.Refining && x.BuildType != ItemBuildType.Other)
+                .Where(x => x.BuildType != ItemBuildType.Refining && x.BuildType != ItemBuildType.Other && x.BuildType != ItemBuildType.Pumpjack && x.BuildType != ItemBuildType.OffshorePump)
                 .GroupBy(x => x.BuildType)
                 .ToDictionary(x => x.Key, x => x
                     .GroupBy(y => y.Module)
@@ -121,7 +121,7 @@ namespace FactorioHelper
 
                 foreach (var sourceItem in sourceItems)
                 {
-                    AddOrUpdateItemProuction(fromProduction, sourceItem);
+                    AddOrUpdateItemProduction(fromProduction, sourceItem);
                 }
 
                 return new OilProductionOutput
@@ -143,7 +143,7 @@ namespace FactorioHelper
             Fraction heavyTotalRemains = 0;
             Fraction lightTotalRemains = 0;
             Dictionary<int, int> countFactoriesByRecipeFlagged = null;
-            Fraction totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
+            var totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
 
             var countFactoriesByRecipe = recipes.ToDictionary(_ => _.Id, _ => 0);
 
@@ -204,8 +204,8 @@ namespace FactorioHelper
             fromProduction.RemoveAll(_ => _.Id == HeavyOilId);
             fromProduction.RemoveAll(_ => _.Id == LightOilId);
 
-            AddOrUpdateItemProuction(fromProduction, new KeyValuePair<int, Fraction>(WaterId, waterConsome));
-            AddOrUpdateItemProuction(fromProduction, new KeyValuePair<int, Fraction>(CrudeOilId, crudeConsome));
+            AddOrUpdateItemProduction(fromProduction, new KeyValuePair<int, Fraction>(WaterId, waterConsome));
+            AddOrUpdateItemProduction(fromProduction, new KeyValuePair<int, Fraction>(CrudeOilId, crudeConsome));
 
             var chemicalPlantReq = new Dictionary<int, int>();
             var refineryReq = new Dictionary<int, int>();
@@ -239,27 +239,33 @@ namespace FactorioHelper
             return oilOutput;
         }
 
-        private void AddOrUpdateItemProuction(List<ProductionItem> fromProduction, KeyValuePair<int, Fraction> sourceItem)
+        private void AddOrUpdateItemProduction(List<ProductionItem> fromProduction, KeyValuePair<int, Fraction> sourceItem)
         {
             var itembaseInfo = GetItemById(sourceItem.Key);
-            var existingItem = fromProduction.FirstOrDefault(_ => _.Id == sourceItem.Key);
+            AddOrUpdateItemRequirements(fromProduction, sourceItem.Value, itembaseInfo);
+        }
+
+        private void AddOrUpdateItemRequirements(List<ProductionItem> fromProduction, Fraction reqToAdd, Item itembaseInfo)
+        {
+            var existingItem = fromProduction.FirstOrDefault(_ => _.Id == itembaseInfo.Id);
             var timeRate = itembaseInfo.GetProductionRate(this);
             if (existingItem == null)
             {
-                fromProduction.Add(new ProductionItem
+                existingItem = new ProductionItem
                 {
                     Id = itembaseInfo.Id,
                     Name = itembaseInfo.Name,
                     BuildType = itembaseInfo.BuildType,
-                    RealMachineRequirement = sourceItem.Value * timeRate,
-                    PerSecQuantityRequirement = sourceItem.Value
-                });
+                    RealMachineRequirement = reqToAdd * timeRate,
+                    PerSecQuantityRequirement = reqToAdd
+                };
+                fromProduction.Add(existingItem);
             }
             else
             {
-                existingItem.PerSecQuantityRequirement += sourceItem.Value;
-                existingItem.RealMachineRequirement = existingItem.PerSecQuantityRequirement / timeRate;
+                existingItem.PerSecQuantityRequirement += reqToAdd;
             }
+            existingItem.RealMachineRequirement = existingItem.PerSecQuantityRequirement * timeRate;
         }
 
         private static Fraction GetOilRequirement(IReadOnlyCollection<ProductionItem> fromProduction, int oilId)
@@ -289,16 +295,7 @@ namespace FactorioHelper
                     ? targetPerSec
                     : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
 
-                var rate = item.GetProductionRate(this);
-
-                itemsResult.Add(new ProductionItem
-                {
-                    Id = item.Id,
-                    RealMachineRequirement = itemTargetPerSec * rate,
-                    PerSecQuantityRequirement = itemTargetPerSec,
-                    Name = item.Name,
-                    BuildType = item.BuildType
-                });
+                AddOrUpdateItemRequirements(itemsResult, itemTargetPerSec, item);
                 i++;
             }
 

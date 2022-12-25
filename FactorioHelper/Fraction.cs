@@ -44,61 +44,129 @@ namespace FactorioHelper
             => _num / (decimal)_den;
 
         public static Fraction operator +(Fraction a)
-            => a;
+        {
+            return a;
+        }
+
         public static Fraction operator -(Fraction a)
-            => new Fraction(-a._num, a._den);
+        {
+            return new Fraction(-a._num, a._den);
+        }
 
         public static Fraction operator +(Fraction a, Fraction b)
-            => new Fraction(a._num * b._den + b._num * a._den, a._den * b._den);
+        {
+            return new Fraction(a._num * b._den + b._num * a._den, a._den * b._den);
+        }
+
         public static Fraction operator -(Fraction a, Fraction b)
-            => a + (-b);
+        {
+            return a + (-b);
+        }
+
         public static Fraction operator *(Fraction a, Fraction b)
-            => new Fraction(a._num * b._num, a._den * b._den);
+        {
+            return new Fraction(a._num * b._num, a._den * b._den);
+        }
+
         public static Fraction operator /(Fraction a, Fraction b)
-            => b._num == 0 ? throw new DivideByZeroException() : new Fraction(a._num * b._den, a._den * b._num);
+        {
+            return b._num == 0 ? throw new DivideByZeroException() : new Fraction(a._num * b._den, a._den * b._num);
+        }
 
         public static Fraction operator +(Fraction a, int b)
-            => new Fraction(a._num * 1 + b * a._den, a._den * 1);
+        {
+            return new Fraction(a._num * 1 + b * a._den, a._den * 1);
+        }
+
         public static Fraction operator *(Fraction a, int b)
-            => new Fraction(a._num * b, a._den * 1);
+        {
+            return new Fraction(a._num * b, a._den * 1);
+        }
+
         public static Fraction operator -(Fraction a, int b)
-            => a - new Fraction(b);
+        {
+            return a - new Fraction(b);
+        }
+
         public static Fraction operator -(int a, Fraction b)
-            => new Fraction(a) - b;
+        {
+            return new Fraction(a) - b;
+        }
 
         public static bool operator ==(Fraction a, int value)
-            => a.Decimal == value;
+        {
+            return a.Decimal == value;
+        }
+
         public static bool operator !=(Fraction a, int value)
-            => a.Decimal != value;
+        {
+            return a.Decimal != value;
+        }
+
         public static bool operator >=(Fraction a, int value)
-            => a.Decimal >= value;
+        {
+            return a.Decimal >= value;
+        }
+
         public static bool operator <=(Fraction a, int value)
-            => a.Decimal <= value;
+        {
+            return a.Decimal <= value;
+        }
+
         public static bool operator >(Fraction a, int value)
-            => a.Decimal > value;
+        {
+            return a.Decimal > value;
+        }
+
         public static bool operator <(Fraction a, int value)
-            => a.Decimal < value;
+        {
+            return a.Decimal < value;
+        }
 
         public static bool operator ==(Fraction a, decimal value)
-            => a.Decimal == value;
+        {
+            return a.Decimal == value;
+        }
+
         public static bool operator !=(Fraction a, decimal value)
-            => a.Decimal != value;
+        {
+            return a.Decimal != value;
+        }
+
         public static bool operator >=(Fraction a, decimal value)
-            => a.Decimal >= value;
+        {
+            return a.Decimal >= value;
+        }
+
         public static bool operator <=(Fraction a, decimal value)
-            => a.Decimal <= value;
+        {
+            return a.Decimal <= value;
+        }
+
         public static bool operator >(Fraction a, decimal value)
-            => a.Decimal > value;
+        {
+            return a.Decimal > value;
+        }
+
         public static bool operator <(Fraction a, decimal value)
-            => a.Decimal < value;
+        {
+            return a.Decimal < value;
+        }
 
         public override string ToString()
-            => Math.Round(Decimal, 3).ToString();
+        {
+            return Math.Round(Decimal, 3).ToString();
+        }
 
         public static bool operator ==(Fraction a, Fraction b)
-            => a.Equals(b);
+        {
+            return a.Equals(b);
+        }
+
         public static bool operator !=(Fraction a, Fraction b)
-            => !(a == b);
+        {
+            return !(a == b);
+        }
 
         public Fraction Reduce()
         {
@@ -124,7 +192,7 @@ namespace FactorioHelper
             {
                 return this == (int)obj;
             }
-            else if(obj.GetType() != typeof(Fraction))
+            else if (obj.GetType() != typeof(Fraction))
             {
                 return false;
             }
@@ -140,9 +208,15 @@ namespace FactorioHelper
             return _num ^ _den;
         }
 
-        public static implicit operator Fraction(int b) => new Fraction(b);
+        public static implicit operator Fraction(int b)
+        {
+            return new Fraction(b);
+        }
 
-        public static implicit operator Fraction(decimal b) => new Fraction(b);
+        public static implicit operator Fraction(decimal b)
+        {
+            return new Fraction(b);
+        }
     }
 
     public static class LinqExtensions

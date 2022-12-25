@@ -8,6 +8,8 @@
         MiningDrill,
         Refining,
         Other,
-        RocketSilo
+        RocketSilo,
+        OffshorePump,
+        Pumpjack
     }
 }

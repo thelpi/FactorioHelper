@@ -203,6 +203,8 @@
     <Resource Include="Pictures\Items\-4.png" />
     <Resource Include="Pictures\Items\-5.png" />
     <Resource Include="Pictures\Items\-6.png" />
+    <Resource Include="Pictures\Items\57.png" />
+    <Resource Include="Pictures\Items\56.png" />
     <Content Include="Scripts\factorio.sql" />
   </ItemGroup>
   <ItemGroup />

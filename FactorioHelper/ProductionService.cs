@@ -21,12 +21,12 @@ namespace FactorioHelper
 
         private static readonly IReadOnlyDictionary<int, string> SciencePackGroups = new Dictionary<int, string>
         {
-            { -1, "AL packs" },
-            { -2, "ALM packs" },
-            { -3, "ALMC packs" },
-            { -4, "ALMCP packs" },
-            { -5, "ALMCPU packs" },
-            { -6, "ALMCPUS packs" }
+            { -1, "Each pack to Logistic" },
+            { -2, "Each pack to Military" },
+            { -3, "Each pack to Chemical" },
+            { -4, "Each pack to Production" },
+            { -5, "Each pack to Utility" },
+            { -6, "Each pack to Space" }
         };
 
         private static readonly IReadOnlyDictionary<int, int[]> SciencePackGroupsItems = new Dictionary<int, int[]>
@@ -294,7 +294,7 @@ namespace FactorioHelper
 
                 var item = itemsToProduce[i];
 
-                var itemTargetPerSec = (item.Id == itemId || (itemId < 0 && GetSciencePackItemIds(itemId).Contains(item.Id)))
+                var itemTargetPerSec = (item.Id == itemId || (itemId < 0 && SciencePackGroupsItems[itemId].Contains(item.Id)))
                     ? targetPerSec
                     : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
 
@@ -330,10 +330,12 @@ namespace FactorioHelper
 
             if (itemId < 0)
             {
-                itemsToProduce.AddRange(GetSciencePackItemIds(itemId).Select(GetItemById));
+                itemsToProduce.AddRange(SciencePackGroupsItems[itemId].Select(GetItemById));
             }
             else
+            {
                 itemsToProduce.Add(GetItemById(itemId));
+            }
 
             var currentItemIndex = 0;
 
@@ -353,21 +355,11 @@ namespace FactorioHelper
             return itemsToProduce;
         }
 
-        private IReadOnlyCollection<int> GetSciencePackItemIds(int sciencePackItemGroupId)
-        {
-            return _dataProvider
-                .GetDatas(
-                    "SELECT id FROM item WHERE is_science_pack = 1",
-                    _ => _.Get<int>("id"))
-                .Where(x => SciencePackGroupsItems[sciencePackItemGroupId].Contains(x))
-                .ToList();
-        }
-
         private Item GetItemById(int itemId)
         {
             var item = _dataProvider
                 .GetData(
-                    $"SELECT id, name, build_time, build_result, build_type_id, is_science_pack, apply_real_requirement FROM item WHERE id = {itemId}",
+                    $"SELECT id, name, build_time, build_result, build_type_id, apply_real_requirement FROM item WHERE id = {itemId}",
                     _ =>
                     {
                         var localItem = new Item
@@ -377,7 +369,6 @@ namespace FactorioHelper
                             BuildResult = _.Get<int>("build_result"),
                             BuildTime = _.Get<decimal>("build_time"),
                             BuildType = (ItemBuildType)_.Get<int>("build_type_id"),
-                            IsSciencePack = _.Get<byte>("is_science_pack") != 0,
                             ApplyRealRequirement = _.Get<byte>("apply_real_requirement") != 0
                         };
 

@@ -36,7 +36,6 @@ namespace FactorioHelper.Items
                 BuildTime = BuildTime,
                 BuildResult = BuildResult,
                 Composition = Composition,
-                IsSciencePack = IsSciencePack,
                 ApplyRealRequirement = ApplyRealRequirement,
             };
         }

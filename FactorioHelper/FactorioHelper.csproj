@@ -123,6 +123,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="ToDoList.txt" />
     <Resource Include="Pictures\Modules\Efficiency1.png" />
     <Resource Include="Pictures\Modules\Efficiency2.png" />
     <Resource Include="Pictures\Modules\Productivity1.png" />

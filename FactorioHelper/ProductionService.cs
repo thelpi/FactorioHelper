@@ -69,7 +69,8 @@ namespace FactorioHelper
         internal void SetModulesConfiguration(IReadOnlyCollection<ModuleConfiguration> modulesConfiguration)
         {
             StandardModulesConfiguration = modulesConfiguration
-                .Where(x => x.BuildType != ItemBuildType.Refining && x.BuildType != ItemBuildType.Other && x.BuildType != ItemBuildType.OffshorePump)
+                .Where(x => EnumExtensions.ModulableBuildTypes().Contains(x.BuildType)
+                    && !EnumExtensions.OilModulableBuildTypes().Contains(x.BuildType))
                 .GroupBy(x => x.BuildType)
                 .ToDictionary(x => x.Key, x => x
                     .GroupBy(y => y.Module)
@@ -77,7 +78,7 @@ namespace FactorioHelper
                     .ToList()
                     as IReadOnlyCollection<KeyValuePair<ModuleType, int>>);
             OilRecipesModulesConfiguration = modulesConfiguration
-                .Where(x => x.BuildType == ItemBuildType.Refining || x.BuildType == ItemBuildType.ChemicalPlant)
+                .Where(x => EnumExtensions.OilModulableBuildTypes().Contains(x.BuildType))
                 .GroupBy(x => x.BuildType)
                 .ToDictionary(x => x.Key, x => x
                     .GroupBy(y => y.Module)

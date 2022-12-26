@@ -1,6 +1,6 @@
 ﻿namespace FactorioHelper.Enums
 {
-    internal enum MiningDrillType
+    public enum MiningDrillType
     {
         Burner,
         Electric

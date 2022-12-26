@@ -1,6 +1,6 @@
 ﻿namespace FactorioHelper.Enums
 {
-    internal enum ItemBuildType
+    public enum ItemBuildType
     {
         AssemblingMachine = 1,
         ChemicalPlant,

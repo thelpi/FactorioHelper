@@ -1,6 +1,6 @@
 ﻿namespace FactorioHelper.Enums
 {
-    internal enum FurnaceType
+    public enum FurnaceType
     {
         Stone,
         Steel,

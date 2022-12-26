@@ -45,7 +45,8 @@ namespace FactorioHelper
                 { ItemBuildType.AssemblingMachine, x => x.ToItem<AssemblingItem>() },
                 { ItemBuildType.Furnace, x => x.ToItem<FurnaceItem>() },
                 { ItemBuildType.MiningDrill, x => x.ToItem<MiningItem>() },
-                { ItemBuildType.Refining, x => x.ToItem<RefiningItem>() }
+                { ItemBuildType.Refining, x => x.ToItem<RefiningItem>() },
+                { ItemBuildType.Pumpjack, x => x.ToItem<PumpjackItem>() }
             };
 
         private readonly IDataProvider _dataProvider;
@@ -55,6 +56,7 @@ namespace FactorioHelper
         public int MiningBonus { get; set; }
         public AssemblingType AssemblingType { get; set; }
         public bool AdvancedOilProcessing { get; set; }
+        public int CrudeOilInitialYield { get; set; }
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> StandardModulesConfiguration { get; private set; }
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> OilRecipesModulesConfiguration { get; private set; }
 
@@ -67,7 +69,7 @@ namespace FactorioHelper
         internal void SetModulesConfiguration(IReadOnlyCollection<ModuleConfiguration> modulesConfiguration)
         {
             StandardModulesConfiguration = modulesConfiguration
-                .Where(x => x.BuildType != ItemBuildType.Refining && x.BuildType != ItemBuildType.Other && x.BuildType != ItemBuildType.Pumpjack && x.BuildType != ItemBuildType.OffshorePump)
+                .Where(x => x.BuildType != ItemBuildType.Refining && x.BuildType != ItemBuildType.Other && x.BuildType != ItemBuildType.OffshorePump)
                 .GroupBy(x => x.BuildType)
                 .ToDictionary(x => x.Key, x => x
                     .GroupBy(y => y.Module)

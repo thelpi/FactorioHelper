@@ -38,6 +38,7 @@
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
@@ -74,10 +75,12 @@
             </ComboBox>
             <Label Grid.Column="0" Grid.Row="5" VerticalAlignment="Center" HorizontalContentAlignment="Right" Content="Assembling type:" />
             <ComboBox Grid.Column="1" Grid.Row="5" Height="30" VerticalContentAlignment="Center" Name="AssemblingTypeComboBox" />
-            <Label Grid.Column="0" Grid.Row="6" VerticalAlignment="Center" HorizontalContentAlignment="Right" Content="Advanced oil:" />
-            <CheckBox Grid.Column="1" Grid.Row="6"  Name="AdvancedRefiningCheckBox" VerticalAlignment="Center" />
-            <Label Grid.Column="0" Grid.Row="7" VerticalAlignment="Center" HorizontalContentAlignment="Right" Content="Modules:" />
-            <StackPanel Grid.Column="1" Grid.Row="7" Orientation="Vertical">
+            <Label Grid.Column="0" Grid.Row="6" VerticalAlignment="Center" HorizontalContentAlignment="Right" Content="Crude oil initial yield:" />
+            <TextBox Grid.Column="1" Grid.Row="6" Height="30" VerticalContentAlignment="Center" Name="CrudeOilInitialYieldText" />
+            <Label Grid.Column="0" Grid.Row="7" VerticalAlignment="Center" HorizontalContentAlignment="Right" Content="Advanced oil:" />
+            <CheckBox Grid.Column="1" Grid.Row="7"  Name="AdvancedRefiningCheckBox" VerticalAlignment="Center" />
+            <Label Grid.Column="0" Grid.Row="8" VerticalAlignment="Center" HorizontalContentAlignment="Right" Content="Modules:" />
+            <StackPanel Grid.Column="1" Grid.Row="8" Orientation="Vertical">
                 <ListBox Name="ModulesListBox" Visibility="Collapsed" BorderThickness="0">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -103,8 +106,8 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </StackPanel>
-            <Button Grid.Column="1" Grid.Row="8" Content="Add module" Height="25" Width="100" HorizontalAlignment="Left" Name="AddModuleButton" Click="AddModuleButton_Click" />
-            <Button Grid.Column="0" Grid.Row="9" Grid.ColumnSpan="2" Width="200" Height="25" VerticalAlignment="Bottom" Content="Compute requirements" Name="CalculateButton" Click="CalculateButton_Click" />
+            <Button Grid.Column="1" Grid.Row="9" Content="Add module" Height="25" Width="100" HorizontalAlignment="Left" Name="AddModuleButton" Click="AddModuleButton_Click" />
+            <Button Grid.Column="0" Grid.Row="10" Grid.ColumnSpan="2" Width="200" Height="25" VerticalAlignment="Bottom" Content="Compute requirements" Name="CalculateButton" Click="CalculateButton_Click" />
         </Grid>
         <ScrollViewer Name="ResultsScrollViewer" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
             <ListView Name="ResultsListBox">

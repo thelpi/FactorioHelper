@@ -13,15 +13,12 @@ namespace FactorioHelper.Items
 
         public virtual Fraction GetRealBuildTime(ProductionService productionService)
         {
-            var rate = GetSpeedModuleRate(productionService);
-            return rate >= 1
-                ? BuildTime / rate
-                : BuildTime * (1 - rate);
+            return GetRealBuildTimeFromCustomBuildTime(BuildTime, productionService);
         }
 
-        public Fraction GetRealBuildResult(ProductionService productionService)
+        protected virtual Fraction GetRealBuildResult(ProductionService productionService)
         {
-            return BuildResult + (BuildResult * GetProductivityModuleBonus(productionService));
+            return GetRealBuildResultFromCustomBuildResult(BuildResult, productionService);
         }
 
         public Fraction GetProductionRate(ProductionService productionService)
@@ -58,6 +55,19 @@ namespace FactorioHelper.Items
                 ? productionService.StandardModulesConfiguration[BuildType].Sum(_ => _.Key.GetProductivityBonus() * _.Value)
                 : 0;
             return rate;
+        }
+
+        protected Fraction GetRealBuildTimeFromCustomBuildTime(Fraction buildTime, ProductionService productionService)
+        {
+            var rate = GetSpeedModuleRate(productionService);
+            return rate >= 1
+                ? buildTime / rate
+                : buildTime * (1 - rate);
+        }
+
+        protected Fraction GetRealBuildResultFromCustomBuildResult(Fraction buildResult, ProductionService productionService)
+        {
+            return buildResult + (buildResult * GetProductivityModuleBonus(productionService));
         }
     }
 }

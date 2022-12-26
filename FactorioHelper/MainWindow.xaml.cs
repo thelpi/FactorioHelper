@@ -44,11 +44,12 @@ namespace FactorioHelper
             MiningBonusComboBox.SelectedIndex = 2;
             TargetPerSecText.Text = 1.2M.ToString(CultureInfo.InvariantCulture);
             AdvancedRefiningCheckBox.IsChecked = true;
+            CrudeOilInitialYieldText.Text = 500.ToString();
         }
 
         private void CalculateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!CheckFormInput(out var targetPerSec))
+            if (!CheckFormInput(out var targetPerSec, out var crudeOilInitialYield))
             {
                 MessageBox.Show("All fields are mandatory.", "FactorioHelper", MessageBoxButton.OK);
                 return;
@@ -56,6 +57,7 @@ namespace FactorioHelper
 
             var itemId = (ItemsComboBox.SelectedItem as BaseItem).Id;
 
+            _productionService.CrudeOilInitialYield = crudeOilInitialYield;
             _productionService.AssemblingType = (AssemblingType)AssemblingTypeComboBox.SelectedItem;
             _productionService.FurnaceType = (FurnaceType)FurnaceTypeComboBox.SelectedItem;
             _productionService.MiningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
@@ -75,9 +77,10 @@ namespace FactorioHelper
             OilResultsScrollViewer.Visibility = Visibility.Visible;
         }
 
-        private bool CheckFormInput(out decimal targetPerSec)
+        private bool CheckFormInput(out decimal targetPerSec, out int crudeOilInitialYield)
         {
             targetPerSec = 0;
+            crudeOilInitialYield = 0;
 
             if (MiningDrillTypeComboBox.SelectedIndex < 0
                 || FurnaceTypeComboBox.SelectedIndex < 0
@@ -93,7 +96,10 @@ namespace FactorioHelper
                 CultureInfo.InvariantCulture,
                 out targetPerSec);
 
-            return targetPerSec > 0;
+            int.TryParse(CrudeOilInitialYieldText.Text,
+                out crudeOilInitialYield);
+
+            return targetPerSec > 0 && crudeOilInitialYield > 0;
         }
 
         private void AddModuleButton_Click(object sender, RoutedEventArgs e)

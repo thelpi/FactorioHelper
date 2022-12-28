@@ -87,7 +87,7 @@ namespace FactorioHelper
                     as IReadOnlyCollection<KeyValuePair<ModuleType, int>>);
         }
 
-        internal OilProductionOutput GetOilToProduce(List<ProductionItem> fromProduction)
+        internal OilProductionOutput GetOilToProduce(Dictionary<int, ProductionItem> fromProduction)
         {
             var lightReqPerSec = GetOilRequirement(fromProduction, LightOilId);
             var heavyReqPerSec = GetOilRequirement(fromProduction, HeavyOilId);
@@ -116,7 +116,7 @@ namespace FactorioHelper
 
                 var refineryCountReq = (int)Math.Ceiling((gazReqPerSec / gazProdPerSec).Decimal);
 
-                fromProduction.RemoveAll(_ => _.Id == PetroleumGasId);
+                fromProduction.Remove(PetroleumGasId);
 
                 var sourceItems = basicOilProcessingRecipe.SourceItems
                     .Select(_ => new KeyValuePair<int, Fraction>(_.Key, basicOilProcessingRecipe.GetSourcePerSec(_.Key) * refineryCountReq))
@@ -203,9 +203,9 @@ namespace FactorioHelper
             var crudeConsome = recipes.FractionSum(_ => _.GetSourcePerSec(CrudeOilId) * countFactoriesByRecipeFlagged[_.Id]);
             var waterConsome = recipes.FractionSum(_ => _.GetSourcePerSec(WaterId) * countFactoriesByRecipeFlagged[_.Id]);
 
-            fromProduction.RemoveAll(_ => _.Id == PetroleumGasId);
-            fromProduction.RemoveAll(_ => _.Id == HeavyOilId);
-            fromProduction.RemoveAll(_ => _.Id == LightOilId);
+            fromProduction.Remove(PetroleumGasId);
+            fromProduction.Remove(HeavyOilId);
+            fromProduction.Remove(LightOilId);
 
             AddOrUpdateItemProduction(fromProduction, new KeyValuePair<int, Fraction>(WaterId, waterConsome));
             AddOrUpdateItemProduction(fromProduction, new KeyValuePair<int, Fraction>(CrudeOilId, crudeConsome));
@@ -242,19 +242,18 @@ namespace FactorioHelper
             return oilOutput;
         }
 
-        private void AddOrUpdateItemProduction(List<ProductionItem> fromProduction, KeyValuePair<int, Fraction> sourceItem)
+        private void AddOrUpdateItemProduction(Dictionary<int, ProductionItem> fromProduction, KeyValuePair<int, Fraction> sourceItem)
         {
             var itembaseInfo = GetItemById(sourceItem.Key);
             AddOrUpdateItemRequirements(fromProduction, sourceItem.Value, itembaseInfo);
         }
 
-        private void AddOrUpdateItemRequirements(List<ProductionItem> fromProduction, Fraction reqToAdd, Item itembaseInfo)
+        private void AddOrUpdateItemRequirements(Dictionary<int, ProductionItem> fromProduction, Fraction reqToAdd, Item itembaseInfo)
         {
-            var existingItem = fromProduction.FirstOrDefault(_ => _.Id == itembaseInfo.Id);
             var timeRate = itembaseInfo.GetProductionRate(this);
-            if (existingItem == null)
+            if (!fromProduction.ContainsKey(itembaseInfo.Id))
             {
-                existingItem = new ProductionItem
+                var item = new ProductionItem
                 {
                     Id = itembaseInfo.Id,
                     Name = itembaseInfo.Name,
@@ -262,30 +261,25 @@ namespace FactorioHelper
                     RealMachineRequirement = reqToAdd * timeRate,
                     PerSecQuantityRequirement = reqToAdd
                 };
-                fromProduction.Add(existingItem);
+                fromProduction.Add(item.Id, item);
             }
             else
             {
-                existingItem.PerSecQuantityRequirement += reqToAdd;
+                fromProduction[itembaseInfo.Id].PerSecQuantityRequirement += reqToAdd;
             }
-            existingItem.RealMachineRequirement = existingItem.PerSecQuantityRequirement * timeRate;
+            fromProduction[itembaseInfo.Id].RealMachineRequirement = fromProduction[itembaseInfo.Id].PerSecQuantityRequirement * timeRate;
         }
 
-        private static Fraction GetOilRequirement(IReadOnlyCollection<ProductionItem> fromProduction, int oilId)
+        private static Fraction GetOilRequirement(Dictionary<int, ProductionItem> fromProduction, int oilId)
         {
-            return GetOilItem(fromProduction, oilId)?.PerSecQuantityRequirement ?? 0;
+            return (fromProduction.ContainsKey(oilId) ? fromProduction[oilId] : null)?.PerSecQuantityRequirement ?? 0;
         }
 
-        private static ProductionItem GetOilItem(IReadOnlyCollection<ProductionItem> fromProduction, int oilId)
-        {
-            return fromProduction.SingleOrDefault(_ => _.Id == oilId);
-        }
-
-        internal List<ProductionItem> GetItemsToProduce(Fraction targetPerSec, int itemId)
+        internal Dictionary<int, ProductionItem> GetItemsToProduce(Fraction targetPerSec, int itemId)
         {
             var itemsToProduce = GetFullListOfItemsToProduce(itemId);
 
-            var itemsResult = new List<ProductionItem>();
+            var itemsResult = new Dictionary<int, ProductionItem>();
 
             var i = 0;
             while (i < itemsToProduce.Count)
@@ -418,17 +412,27 @@ namespace FactorioHelper
 
         private Fraction GetItemPerSecFromParents(
             List<Item> itemsToProduce,
-            List<ProductionItem> itemsResult,
+            Dictionary<int, ProductionItem> itemsResult,
             Item item)
         {
-            return itemsToProduce
-                .Where(_ => _.Composition.ContainsKey(item.Id))
-                .FractionSum(_ => _.Composition[item.Id] * (_.ApplyRealRequirement ? itemsResult.Single(x => x.Id == _.Id).RealMachineRequirement : itemsResult.Single(x => x.Id == _.Id).MachineRequirement) / _.GetRealBuildTime(this));
+            var perSec = new Fraction(0);
+            foreach (var localItem in itemsToProduce.Where(_ => _.Composition.ContainsKey(item.Id)))
+            {
+                var parentItem = itemsResult[localItem.Id];
+                var localPerSec = localItem.Composition[item.Id] * (
+                    localItem.ApplyRealRequirement
+                        ? parentItem.RealMachineRequirement
+                        : parentItem.MachineRequirement)
+                    / localItem.GetRealBuildTime(this);
+                parentItem.AddComponent(item.Id, localPerSec);
+                perSec += localPerSec;
+            }
+            return perSec;
         }
 
         private void CheckSuitableItem(
             List<Item> itemsToProduce,
-            List<ProductionItem> itemsResult,
+            Dictionary<int, ProductionItem> itemsResult,
             int i)
         {
             var currentItemIsSuitable = false;
@@ -436,7 +440,7 @@ namespace FactorioHelper
             {
                 var it = itemsToProduce[i];
                 var parentItems = itemsToProduce.Where(_ => _.Composition.ContainsKey(it.Id)).ToList();
-                if (parentItems.Count > 0 && !parentItems.All(_ => itemsResult.Any(x => x.Id == _.Id)))
+                if (parentItems.Count > 0 && !parentItems.All(_ => itemsResult.ContainsKey(_.Id)))
                 {
                     itemsToProduce.Add(it);
                     itemsToProduce.RemoveAt(i);

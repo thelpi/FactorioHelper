@@ -68,7 +68,7 @@ namespace FactorioHelper
             var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
             var oilProduction = _productionService.GetOilToProduce(production);
 
-            ResultsListBox.ItemsSource = production;
+            ResultsListBox.ItemsSource = production.Values;
             ResultsScrollViewer.Visibility = Visibility.Visible;
 
             OilRemainsListBox.ItemsSource = oilProduction.RemainsPerSec;

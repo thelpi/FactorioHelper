@@ -14,20 +14,20 @@ namespace FactorioHelper.Items
         public Fraction PerSecQuantityRequirement { get; set; }
         public IReadOnlyList<ProductionComponent> Components => _components.Values.ToList();
 
-        public void AddComponent(int id, Fraction perSecQuantityRequirement)
+        public void AddComponent(int id, string name, Fraction perSecQuantityRequirement)
         {
             // crash if duplicate (that's what we want)
             _components.Add(id, new ProductionComponent
             {
                 Id = id,
+                Name = name, 
                 PerSecQuantityRequirement = perSecQuantityRequirement
             });
         }
-    }
 
-    public class ProductionComponent
-    {
-        public int Id { get; set; }
-        public Fraction PerSecQuantityRequirement { get; set; }
+        public void SetComponentUseRate(int id, Fraction totalPerSec)
+        {
+            _components[id].UseRate = _components[id].PerSecQuantityRequirement / totalPerSec;
+        }
     }
 }

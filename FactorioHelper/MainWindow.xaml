@@ -156,7 +156,7 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Image Width="30" Height="30" Source="{Binding Path=Id, Converter={StaticResource itemIdImageConverter}}" ToolTip="{Binding Path=PerSecQuantityRequirement}" />
+                                                <Image Width="30" Height="30" Source="{Binding Path=Id, Converter={StaticResource itemIdImageConverter}}" ToolTip="{Binding Path=PerSecInformation}" />
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>

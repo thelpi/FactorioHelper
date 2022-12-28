@@ -82,6 +82,7 @@
     <Compile Include="Items\FurnaceItem.cs" />
     <Compile Include="Items\Item.cs" />
     <Compile Include="Items\MiningItem.cs" />
+    <Compile Include="Items\ProductionComponent.cs" />
     <Compile Include="Items\PumpjackItem.cs" />
     <Compile Include="Items\RecipeItem.cs" />
     <Compile Include="Items\RefiningItem.cs" />

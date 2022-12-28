@@ -415,6 +415,8 @@ namespace FactorioHelper
             Dictionary<int, ProductionItem> itemsResult,
             Item item)
         {
+            var parentItems = new List<ProductionItem>(10);
+
             var perSec = new Fraction(0);
             foreach (var localItem in itemsToProduce.Where(_ => _.Composition.ContainsKey(item.Id)))
             {
@@ -424,9 +426,14 @@ namespace FactorioHelper
                         ? parentItem.RealMachineRequirement
                         : parentItem.MachineRequirement)
                     / localItem.GetRealBuildTime(this);
-                parentItem.AddComponent(item.Id, localPerSec);
+                parentItem.AddComponent(item.Id,  item.Name, localPerSec);
                 perSec += localPerSec;
+                parentItems.Add(parentItem);
             }
+
+            foreach (var parentItem in parentItems)
+                parentItem.SetComponentUseRate(item.Id, perSec);
+
             return perSec;
         }
 

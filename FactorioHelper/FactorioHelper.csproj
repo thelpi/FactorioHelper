@@ -66,6 +66,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Converters\BuildTypeImageConverter.cs" />
+    <Compile Include="Converters\EfficiencyRateConverter.cs" />
     <Compile Include="Converters\ItemIdImageConverter.cs" />
     <Compile Include="Converters\ModuleImageConverter.cs" />
     <Compile Include="Converters\RecipeImageConverter.cs" />

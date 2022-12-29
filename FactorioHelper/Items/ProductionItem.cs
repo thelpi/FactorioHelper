@@ -8,6 +8,7 @@ namespace FactorioHelper.Items
     {
         private readonly Dictionary<int, ProductionComponent> _components = new Dictionary<int, ProductionComponent>();
 
+        public Fraction MachineRequirementRate => RealMachineRequirement / MachineRequirement;
         public int MachineRequirement => (int)Math.Ceiling(RealMachineRequirement.Decimal);
         public Fraction RealMachineRequirement { get; set; }
         public int TotalQuantityRequirement { get; set; }

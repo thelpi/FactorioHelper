@@ -14,6 +14,7 @@
         <converters:BuildTypeImageConverter x:Key="buildTypeImageConverter" />
         <converters:RecipeImageConverter x:Key="recipeImageConverter" />
         <converters:ModuleImageConverter x:Key="moduleImageConverter" />
+        <converters:EfficiencyRateConverter x:Key="efficiencyRateConverter" />
         <ObjectDataProvider x:Key="itemBuildTypes" MethodName="ModulableBuildTypes" ObjectType="{x:Type loc:EnumExtensions}" />
         <ObjectDataProvider x:Key="moduleTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
@@ -134,7 +135,7 @@
                         <GridViewColumn Header="Fact. req.">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Label VerticalAlignment="Center" Content="{Binding Path=MachineRequirement}" />
+                                    <Label VerticalAlignment="Center" Content="{Binding Path=MachineRequirement}" Background="{Binding Path=MachineRequirementRate, Converter={StaticResource efficiencyRateConverter}}" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

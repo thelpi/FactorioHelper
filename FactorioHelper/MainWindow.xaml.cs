@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using FactorioHelper.Enums;
@@ -63,18 +66,50 @@ namespace FactorioHelper
             _productionService.MiningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
             _productionService.MiningBonus = MiningBonusComboBox.SelectedIndex;
             _productionService.AdvancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
-            _productionService.SetModulesConfiguration(_modules);
+            var modulesList = _modules.ToList();
 
-            var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
-            var oilProduction = _productionService.GetOilToProduce(production);
+            Loadingbar.Visibility = Visibility.Visible;
+            MainPanel.Visibility = Visibility.Hidden;
 
-            ResultsListBox.ItemsSource = production.Values;
-            ResultsScrollViewer.Visibility = Visibility.Visible;
+            var worker = new BackgroundWorker();
+            worker.DoWork += (object _, DoWorkEventArgs dwe) =>
+            {
+                _productionService.SetModulesConfiguration(modulesList);
+                var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
+                var oilProduction = _productionService.GetOilToProduce(production);
+                dwe.Result = new Tuple<IEnumerable<ProductionItem>, OilProductionOutput>(production.Values, oilProduction);
+            };
+            worker.RunWorkerCompleted += (object _, RunWorkerCompletedEventArgs rwce) =>
+            {
+                var actualResult = rwce.Result as Tuple<IEnumerable<ProductionItem>, OilProductionOutput>;
 
-            OilRemainsListBox.ItemsSource = oilProduction.RemainsPerSec;
-            RefineryOilResultsListBox.ItemsSource = oilProduction.RefineryRequirements;
-            ChemicalOilResultsListBox.ItemsSource = oilProduction.ChemicalPlantRequirements;
-            OilResultsScrollViewer.Visibility = Visibility.Visible;
+                ResultsListBox.ItemsSource = actualResult.Item1;
+                ResultsScrollViewer.Visibility = Visibility.Visible;
+
+                OilRemainsListBox.ItemsSource = actualResult.Item2.RemainsPerSec;
+                RefineryOilResultsListBox.ItemsSource = actualResult.Item2.RefineryRequirements;
+                ChemicalOilResultsListBox.ItemsSource = actualResult.Item2.ChemicalPlantRequirements;
+                OilResultsScrollViewer.Visibility = Visibility.Visible;
+
+                Loadingbar.Visibility = Visibility.Collapsed;
+                MainPanel.Visibility = Visibility.Visible;
+
+                CenterWindow();
+            };
+            worker.RunWorkerAsync();
+        }
+
+        private void CenterWindow()
+        {
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                System.Threading.Thread.Sleep(10);
+                Dispatcher.Invoke(() =>
+                {
+                    Left = (SystemParameters.PrimaryScreenWidth / 2) - (Width / 2);
+                    Top = (SystemParameters.PrimaryScreenHeight / 2) - (Height / 2);
+                });
+            });
         }
 
         private bool CheckFormInput(out decimal targetPerSec, out int crudeOilInitialYield)

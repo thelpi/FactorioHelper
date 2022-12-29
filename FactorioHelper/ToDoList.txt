@@ -3,3 +3,4 @@ Energy consumption
 Yield decrease of oild fields
 Items not included in science packs
 Solid fueld from multiple sources
+Conveyors and inserts requirements

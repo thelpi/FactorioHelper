@@ -83,8 +83,10 @@ namespace FactorioHelper
             {
                 var actualResult = rwce.Result as Tuple<IEnumerable<ProductionItem>, OilProductionOutput>;
 
+                DataContext = actualResult;
+                ProductionSelectionCombo.ItemsSource = actualResult.Item1;
                 ResultsListBox.ItemsSource = actualResult.Item1;
-                ResultsScrollViewer.Visibility = Visibility.Visible;
+                ResultsPanel.Visibility = Visibility.Visible;
 
                 OilRemainsListBox.ItemsSource = actualResult.Item2.RemainsPerSec;
                 RefineryOilResultsListBox.ItemsSource = actualResult.Item2.RefineryRequirements;
@@ -185,6 +187,24 @@ namespace FactorioHelper
                 var item = combo.DataContext as ModuleConfiguration;
                 item.Module = (ModuleType)combo.SelectedItem;
             }
+        }
+
+        private void ProductionSelectionCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ProductionSelectionCombo.SelectedItem is ProductionItem pItem)
+            {
+                var data = DataContext as Tuple<IEnumerable<ProductionItem>, OilProductionOutput>;
+
+                ResultsListBox.ItemsSource = data.Item1.Where(x => x.Id == pItem.Id || x.Components.Any(_ => _.Id == pItem.Id));
+            }
+        }
+
+        private void ProductionSelectRemoval_Click(object sender, RoutedEventArgs e)
+        {
+            var data = DataContext as Tuple<IEnumerable<ProductionItem>, OilProductionOutput>;
+
+            ProductionSelectionCombo.SelectedItem = null;
+            ResultsListBox.ItemsSource = data.Item1;
         }
     }
 }

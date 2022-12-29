@@ -108,67 +108,82 @@
                 <Button Grid.Column="1" Grid.Row="9" Content="Add module" Height="25" Width="100" HorizontalAlignment="Left" Name="AddModuleButton" Click="AddModuleButton_Click" />
                 <Button Grid.Column="0" Grid.Row="10" Grid.ColumnSpan="2" Width="200" Height="25" VerticalAlignment="Bottom" Content="Compute requirements" Name="CalculateButton" Click="CalculateButton_Click" />
             </Grid>
-            <ScrollViewer Name="ResultsScrollViewer" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
-                <ListView Name="ResultsListBox">
-                    <ListView.View>
-                        <GridView AllowsColumnReorder="False">
-                            <GridViewColumn Header="">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Image Width="30" Height="30" Source="{Binding Path=Id, Converter={StaticResource itemIdImageConverter}}" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Name">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Label Content="{Binding Path=Name}" VerticalAlignment="Center" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Image Width="30" Height="30" Source="{Binding Path=BuildType, Converter={StaticResource buildTypeImageConverter}}" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="Fact. req.">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Label VerticalAlignment="Center" Content="{Binding Path=MachineRequirement}" Background="{Binding Path=MachineRequirementRate, Converter={StaticResource efficiencyRateConverter}}" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn Header="P/sec. req.">
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Label VerticalAlignment="Center" Content="{Binding Path=PerSecQuantityRequirement}" />
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                            <GridViewColumn>
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <ItemsControl ItemsSource="{Binding Path=Components}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel Orientation="Horizontal"/>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Image Width="30" Height="30" Source="{Binding Path=Id, Converter={StaticResource itemIdImageConverter}}" ToolTip="{Binding Path=PerSecInformation}" />
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </ScrollViewer>
+            <StackPanel Orientation="Vertical" Name="ResultsPanel" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left">
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox Width="250" Margin="0, 5, 0, 5" Height="40" VerticalContentAlignment="Center" Name="ProductionSelectionCombo" HorizontalAlignment="Left" SelectionChanged="ProductionSelectionCombo_SelectionChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Image Width="30" Height="30" Source="{Binding Path=Id, Converter={StaticResource itemIdImageConverter}}" />
+                                    <Label Margin="5, 0, 0, 0" Content="{Binding Path=Name}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button Margin="5, 0, 0, 0" HorizontalAlignment="Left" VerticalAlignment="Center" Content="x" Height="30" Width="30" Name="ProductionSelectRemoval" Click="ProductionSelectRemoval_Click" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+                </StackPanel>
+                <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+                    <ListView Name="ResultsListBox">
+                        <ListView.View>
+                            <GridView AllowsColumnReorder="False">
+                                <GridViewColumn Header="">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Image Width="30" Height="30" Source="{Binding Path=Id, Converter={StaticResource itemIdImageConverter}}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Name">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Label Content="{Binding Path=Name}" VerticalAlignment="Center" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Image Width="30" Height="30" Source="{Binding Path=BuildType, Converter={StaticResource buildTypeImageConverter}}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Fact. req.">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Label VerticalAlignment="Center" Content="{Binding Path=MachineRequirement}" Background="{Binding Path=MachineRequirementRate, Converter={StaticResource efficiencyRateConverter}}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="P/sec. req.">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Label VerticalAlignment="Center" Content="{Binding Path=PerSecQuantityRequirement}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn>
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ItemsControl ItemsSource="{Binding Path=Components}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Image Width="30" Height="30" Source="{Binding Path=Id, Converter={StaticResource itemIdImageConverter}}" ToolTip="{Binding Path=PerSecInformation}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </ScrollViewer>
+            </StackPanel>
             <ScrollViewer Name="OilResultsScrollViewer" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
                 <StackPanel Orientation="Vertical">
                     <Label Content="Recipes req. (refinery)" />

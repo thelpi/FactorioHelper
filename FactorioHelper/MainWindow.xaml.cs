@@ -48,14 +48,26 @@ namespace FactorioHelper
             TargetPerSecText.Text = 1.2M.ToString(CultureInfo.InvariantCulture);
             AdvancedRefiningCheckBox.IsChecked = true;
             CrudeOilInitialYieldText.Text = 500.ToString();
+            SolidFuelHeavyRate.Text = "0/3";
+            SolidFuelLightRate.Text = "3/3";
         }
 
         private void CalculateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!CheckFormInput(out var targetPerSec, out var crudeOilInitialYield))
+            if (!CheckFormInput(out var targetPerSec,
+                out var crudeOilInitialYield,
+                out var solidFuelHeavyRate,
+                out var solidFuelLightRate))
             {
-                MessageBox.Show("All fields are mandatory.", "FactorioHelper", MessageBoxButton.OK);
+                MessageBox.Show("Fields missing or invalid.", "FactorioHelper", MessageBoxButton.OK);
                 return;
+            }
+
+            if (targetPerSec >= 3)
+            {
+                var response = MessageBox.Show("Beyond a rate of 3 p/s, the process is very slow. Are you sure?", "FactorioHelper", MessageBoxButton.YesNo);
+                if (response == MessageBoxResult.No)
+                    return;
             }
 
             var itemId = (ItemsComboBox.SelectedItem as BaseItem).Id;
@@ -66,6 +78,12 @@ namespace FactorioHelper
             _productionService.MiningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
             _productionService.MiningBonus = MiningBonusComboBox.SelectedIndex;
             _productionService.AdvancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
+            _productionService.SolidFuelRateConsumption = new Dictionary<int, Fraction>
+            {
+                { ProductionService.HeavyOilId, solidFuelHeavyRate },
+                { ProductionService.LightOilId, solidFuelLightRate },
+                { ProductionService.PetroleumGasId, 1 - (solidFuelLightRate + solidFuelHeavyRate) }
+            };
             var modulesList = _modules.ToList();
 
             Loadingbar.Visibility = Visibility.Visible;
@@ -76,7 +94,7 @@ namespace FactorioHelper
             {
                 _productionService.SetModulesConfiguration(modulesList);
                 var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
-                var oilProduction = _productionService.GetOilToProduce(production);
+                var oilProduction = _productionService.GetOilToProduce(targetPerSec, production);
                 dwe.Result = new Tuple<IEnumerable<ProductionItem>, OilProductionOutput>(production.Values, oilProduction);
             };
             worker.RunWorkerCompleted += (object _, RunWorkerCompletedEventArgs rwce) =>
@@ -114,10 +132,15 @@ namespace FactorioHelper
             });
         }
 
-        private bool CheckFormInput(out decimal targetPerSec, out int crudeOilInitialYield)
+        private bool CheckFormInput(out Fraction targetPerSec,
+            out int crudeOilInitialYield,
+            out Fraction solidFuelHeavyRate,
+            out Fraction solidFuelLightRate)
         {
             targetPerSec = 0;
             crudeOilInitialYield = 0;
+            solidFuelHeavyRate = 0;
+            solidFuelLightRate = 0;
 
             if (MiningDrillTypeComboBox.SelectedIndex < 0
                 || FurnaceTypeComboBox.SelectedIndex < 0
@@ -128,13 +151,17 @@ namespace FactorioHelper
                 return false;
             }
 
-            decimal.TryParse(TargetPerSecText.Text,
-                NumberStyles.AllowDecimalPoint,
-                CultureInfo.InvariantCulture,
-                out targetPerSec);
+            if (!Fraction.TryParse(SolidFuelHeavyRate.Text, out solidFuelHeavyRate)
+                || !Fraction.TryParse(SolidFuelLightRate.Text, out solidFuelLightRate)
+                || solidFuelHeavyRate + solidFuelLightRate > 1
+                || solidFuelHeavyRate + solidFuelLightRate < 0)
+            {
+                return false;
+            }
 
-            int.TryParse(CrudeOilInitialYieldText.Text,
-                out crudeOilInitialYield);
+            Fraction.TryParse(TargetPerSecText.Text, out targetPerSec);
+
+            int.TryParse(CrudeOilInitialYieldText.Text, out crudeOilInitialYield);
 
             return targetPerSec > 0 && crudeOilInitialYield > 0;
         }

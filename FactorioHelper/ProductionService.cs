@@ -6,18 +6,26 @@ using FactorioHelper.Items;
 
 namespace FactorioHelper
 {
-    internal class ProductionService
+    public class ProductionService
     {
-        private const int PetroleumGasId = 26;
-        private const int HeavyOilId = 41;
-        private const int LightOilId = 42;
+        public const int PetroleumGasId = 26;
+        public const int HeavyOilId = 41;
+        public const int LightOilId = 42;
         private const int CrudeOilId = 43;
         private const int WaterId = 44;
+        private const int SolidFuelId = 50;
 
         private const int BasicOilProcessingRecipeId = 1;
         private const int AdvancedOilProcessingRecipeId = 2;
         private const int LightOilCrackingRecipeId = 4;
         private const int HeavyOilCrackingRecipeId = 5;
+
+        private static readonly IReadOnlyDictionary<int, int> SolidFuelRequirements= new Dictionary<int, int>
+        {
+            { LightOilId, 10 },
+            { HeavyOilId, 20 },
+            { PetroleumGasId, 20 }
+        };
 
         private static readonly IReadOnlyDictionary<int, string> SciencePackGroups = new Dictionary<int, string>
         {
@@ -57,9 +65,9 @@ namespace FactorioHelper
         public AssemblingType AssemblingType { get; set; }
         public bool AdvancedOilProcessing { get; set; }
         public int CrudeOilInitialYield { get; set; }
+        public IReadOnlyDictionary<int, Fraction> SolidFuelRateConsumption { get; set; }
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> StandardModulesConfiguration { get; private set; }
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> OilRecipesModulesConfiguration { get; private set; }
-
 
         internal ProductionService(IDataProvider dataProvider)
         {
@@ -87,7 +95,7 @@ namespace FactorioHelper
                     as IReadOnlyCollection<KeyValuePair<ModuleType, int>>);
         }
 
-        internal OilProductionOutput GetOilToProduce(Dictionary<int, ProductionItem> fromProduction)
+        internal OilProductionOutput GetOilToProduce(Fraction targetPerSec, Dictionary<int, ProductionItem> fromProduction)
         {
             var lightReqPerSec = GetOilRequirement(fromProduction, LightOilId);
             var heavyReqPerSec = GetOilRequirement(fromProduction, HeavyOilId);
@@ -159,12 +167,12 @@ namespace FactorioHelper
                 ? 1
                 : (int)Math.Ceiling((heavyReqPerSec / recipes.Single(_ => _.Id == AdvancedOilProcessingRecipeId).GetTargetPerSec(HeavyOilId)).Decimal);
 
-            const int MaxAttemps = 100;
-            for (var j = minimalHeavyFactoriesCount; j < MaxAttemps; j++)
+            var maxAttemps = Math.Max(Math.Floor(targetPerSec.Decimal) * 100, 100);
+            for (var j = minimalHeavyFactoriesCount; j < maxAttemps; j++)
             {
-                for (var k = 0; k < MaxAttemps; k++)
+                for (var k = 0; k < maxAttemps; k++)
                 {
-                    for (var l = 0; l < MaxAttemps; l++)
+                    for (var l = 0; l < maxAttemps; l++)
                     {
                         countFactoriesByRecipe[AdvancedOilProcessingRecipeId] = j;
                         countFactoriesByRecipe[LightOilCrackingRecipeId] = k;
@@ -371,13 +379,28 @@ namespace FactorioHelper
                             : localItem;
                     });
 
-            item.Composition = _dataProvider
-                .GetDatas(
-                    $"SELECT source_item_id, quantity FROM component WHERE target_item_id = {itemId}",
-                    _ => new KeyValuePair<int, int>(
-                        _.Get<int>("source_item_id"),
-                        _.Get<int>("quantity")))
-                .ToDictionary(_ => _.Key, _ => _.Value);
+            if (itemId == SolidFuelId)
+            {
+                var dic = new Dictionary<int, Fraction>(3);
+                foreach (var k in SolidFuelRequirements.Keys)
+                {
+                    if (SolidFuelRateConsumption.ContainsKey(k) && SolidFuelRateConsumption[k] > 0)
+                    {
+                        dic.Add(k, SolidFuelRequirements[k] * SolidFuelRateConsumption[k]);
+                    }
+                }
+                item.Composition = dic;
+            }
+            else
+            {
+                item.Composition = _dataProvider
+                    .GetDatas(
+                        $"SELECT source_item_id, quantity FROM component WHERE target_item_id = {itemId}",
+                        _ => new KeyValuePair<int, Fraction>(
+                            _.Get<int>("source_item_id"),
+                            _.Get<int>("quantity")))
+                    .ToDictionary(_ => _.Key, _ => _.Value);
+            }
 
             return item;
         }

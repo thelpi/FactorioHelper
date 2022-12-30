@@ -7,7 +7,7 @@ namespace FactorioHelper.Items
     {
         public decimal BuildTime { get; set; }
         public int BuildResult { get; set; }
-        public IReadOnlyDictionary<int, int> Composition { get; set; }
+        public IReadOnlyDictionary<int, Fraction> Composition { get; set; }
         public bool IsSciencePack { get; set; }
         public bool ApplyRealRequirement { get; set; }
 

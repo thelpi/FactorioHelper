@@ -21,7 +21,7 @@ namespace FactorioHelper.Items
             _components.Add(id, new ProductionComponent
             {
                 Id = id,
-                Name = name, 
+                Name = name,
                 PerSecQuantityRequirement = perSecQuantityRequirement
             });
         }

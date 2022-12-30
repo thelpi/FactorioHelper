@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace FactorioHelper
 {
@@ -217,33 +216,6 @@ namespace FactorioHelper
         public static implicit operator Fraction(decimal b)
         {
             return new Fraction(b);
-        }
-
-        public static bool TryParse(string value, out Fraction fraction)
-        {
-            fraction = 0;
-            if (string.IsNullOrWhiteSpace(value))
-                return false;
-
-            if (!value.Contains("/"))
-            {
-                var decSuccess = decimal.TryParse(value,
-                    NumberStyles.AllowDecimalPoint,
-                    CultureInfo.InvariantCulture,
-                    out var fractionDec);
-                fraction = fractionDec;
-                return decSuccess;
-            }
-
-            var parts = value.Split('/');
-            if (parts.Length != 2)
-                return false;
-            if (!int.TryParse(parts[0], out var num))
-                return false;
-            if (!int.TryParse(parts[1], out var den))
-                return false;
-            fraction = new Fraction(num, den);
-            return true;
         }
     }
 

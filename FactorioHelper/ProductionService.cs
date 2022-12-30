@@ -13,19 +13,11 @@ namespace FactorioHelper
         private const int LightOilId = 42;
         private const int CrudeOilId = 43;
         private const int WaterId = 44;
-        private const int SolidFuelId = 50;
 
         private const int BasicOilProcessingRecipeId = 1;
         private const int AdvancedOilProcessingRecipeId = 2;
         private const int LightOilCrackingRecipeId = 4;
         private const int HeavyOilCrackingRecipeId = 5;
-
-        private static readonly IReadOnlyDictionary<int, int> SolidFuelRequirements= new Dictionary<int, int>
-        {
-            { LightOilId, 10 },
-            { HeavyOilId, 20 },
-            { PetroleumGasId, 20 }
-        };
 
         private static readonly IReadOnlyDictionary<int, string> SciencePackGroups = new Dictionary<int, string>
         {
@@ -65,11 +57,9 @@ namespace FactorioHelper
         public AssemblingType AssemblingType { get; set; }
         public bool AdvancedOilProcessing { get; set; }
         public int CrudeOilInitialYield { get; set; }
-        public Fraction SolidFuelHeavyOilRateConsumption { get; set; }
-        public Fraction SolidFuelLightOilRateConsumption { get; set; }
-        public Fraction SolidFuelPetroleumGasRateConsumption => 1 - (SolidFuelHeavyOilRateConsumption + SolidFuelLightOilRateConsumption);
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> StandardModulesConfiguration { get; private set; }
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> OilRecipesModulesConfiguration { get; private set; }
+
 
         internal ProductionService(IDataProvider dataProvider)
         {
@@ -99,16 +89,9 @@ namespace FactorioHelper
 
         internal OilProductionOutput GetOilToProduce(Dictionary<int, ProductionItem> fromProduction)
         {
-            // Maybe a bug here as it considers real req instead of machines req
-            var solidFuelReqPerSec = GetOilRequirement(fromProduction, SolidFuelId);
-
-            var additionalLight = solidFuelReqPerSec * SolidFuelRequirements[LightOilId] * SolidFuelLightOilRateConsumption;
-            var additionalHeavy = solidFuelReqPerSec * SolidFuelRequirements[HeavyOilId] * SolidFuelHeavyOilRateConsumption;
-            var additionalGas = solidFuelReqPerSec * SolidFuelRequirements[PetroleumGasId] * SolidFuelPetroleumGasRateConsumption;
-
-            var lightReqPerSec = GetOilRequirement(fromProduction, LightOilId) + additionalLight;
-            var heavyReqPerSec = GetOilRequirement(fromProduction, HeavyOilId) + additionalHeavy;
-            var gazReqPerSec = GetOilRequirement(fromProduction, PetroleumGasId) + additionalGas;
+            var lightReqPerSec = GetOilRequirement(fromProduction, LightOilId);
+            var heavyReqPerSec = GetOilRequirement(fromProduction, HeavyOilId);
+            var gazReqPerSec = GetOilRequirement(fromProduction, PetroleumGasId);
 
             if (lightReqPerSec > 0 || heavyReqPerSec > 0)
             {
@@ -204,11 +187,11 @@ namespace FactorioHelper
                                         lightTotalRemains = lightRemains;
                                         totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
                                         countFactoriesByRecipeFlagged = new Dictionary<int, int>
-                                            {
-                                                { AdvancedOilProcessingRecipeId, j },
-                                                { LightOilCrackingRecipeId, k },
-                                                { HeavyOilCrackingRecipeId, l },
-                                            };
+                                        {
+                                            { AdvancedOilProcessingRecipeId, j },
+                                            { LightOilCrackingRecipeId, k },
+                                            { HeavyOilCrackingRecipeId, l },
+                                        };
                                     }
                                 }
                             }

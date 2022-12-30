@@ -48,18 +48,13 @@ namespace FactorioHelper
             TargetPerSecText.Text = 1.2M.ToString(CultureInfo.InvariantCulture);
             AdvancedRefiningCheckBox.IsChecked = true;
             CrudeOilInitialYieldText.Text = 500.ToString();
-            SolidFuelHeavyRate.Text = "1/3";
-            SolidFuelLightRate.Text = "1/3";
         }
 
         private void CalculateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!CheckFormInput(out var targetPerSec,
-                out var crudeOilInitialYield,
-                out var solidFuelHeavyRate,
-                out var solidFuelLightRate))
+            if (!CheckFormInput(out var targetPerSec, out var crudeOilInitialYield))
             {
-                MessageBox.Show("Fields missing or invalid.", "FactorioHelper", MessageBoxButton.OK);
+                MessageBox.Show("All fields are mandatory.", "FactorioHelper", MessageBoxButton.OK);
                 return;
             }
 
@@ -71,8 +66,6 @@ namespace FactorioHelper
             _productionService.MiningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
             _productionService.MiningBonus = MiningBonusComboBox.SelectedIndex;
             _productionService.AdvancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
-            _productionService.SolidFuelHeavyOilRateConsumption = solidFuelHeavyRate;
-            _productionService.SolidFuelLightOilRateConsumption = solidFuelLightRate;
             var modulesList = _modules.ToList();
 
             Loadingbar.Visibility = Visibility.Visible;
@@ -121,15 +114,10 @@ namespace FactorioHelper
             });
         }
 
-        private bool CheckFormInput(out Fraction targetPerSec,
-            out int crudeOilInitialYield,
-            out Fraction solidFuelHeavyRate,
-            out Fraction solidFuelLightRate)
+        private bool CheckFormInput(out decimal targetPerSec, out int crudeOilInitialYield)
         {
             targetPerSec = 0;
             crudeOilInitialYield = 0;
-            solidFuelHeavyRate = 0;
-            solidFuelLightRate = 0;
 
             if (MiningDrillTypeComboBox.SelectedIndex < 0
                 || FurnaceTypeComboBox.SelectedIndex < 0
@@ -140,17 +128,13 @@ namespace FactorioHelper
                 return false;
             }
 
-            if (!Fraction.TryParse(SolidFuelHeavyRate.Text, out solidFuelHeavyRate)
-                || !Fraction.TryParse(SolidFuelLightRate.Text, out solidFuelLightRate)
-                || solidFuelHeavyRate + solidFuelLightRate > 1
-                || solidFuelHeavyRate + solidFuelLightRate < 0)
-            {
-                return false;
-            }
+            decimal.TryParse(TargetPerSecText.Text,
+                NumberStyles.AllowDecimalPoint,
+                CultureInfo.InvariantCulture,
+                out targetPerSec);
 
-            Fraction.TryParse(TargetPerSecText.Text, out targetPerSec);
-
-            int.TryParse(CrudeOilInitialYieldText.Text, out crudeOilInitialYield);
+            int.TryParse(CrudeOilInitialYieldText.Text,
+                out crudeOilInitialYield);
 
             return targetPerSec > 0 && crudeOilInitialYield > 0;
         }

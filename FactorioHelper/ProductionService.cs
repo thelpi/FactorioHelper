@@ -128,10 +128,12 @@ namespace FactorioHelper
                 { HeavyOilCrackingRecipeId, GetRecipeById(HeavyOilCrackingRecipeId) }
             };
 
-            Fraction gazTotalRemains = 0;
-            Fraction heavyTotalRemains = 0;
-            Fraction lightTotalRemains = 0;
-            Fraction totalRemains = 0;
+            var remains = new Dictionary<int, Fraction>
+            {
+                { PetroleumGasId, 0 },
+                { HeavyOilId, 0 },
+                { LightOilId, 0 }
+            };
             Dictionary<int, int> countFactoriesByRecipeFlagged = null;
 
             var countFactoriesByRecipe = recipes.ToDictionary(_ => _.Key, _ => 0);
@@ -199,12 +201,11 @@ namespace FactorioHelper
                         // it's the first try
                         // OR remains are lowest as possible
                         if (countFactoriesByRecipeFlagged == null
-                            || totalRemains > (gazRemains + heavyRemains + lightRemains).Decimal) // TODO: operator ">" on fractions
+                            || remains.Values.FractionSum(x => x) > (gazRemains + heavyRemains + lightRemains).Decimal) // TODO: operator ">" on fractions
                         {
-                            gazTotalRemains = gazRemains;
-                            heavyTotalRemains = heavyRemains;
-                            lightTotalRemains = lightRemains;
-                            totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
+                            remains[PetroleumGasId] = gazRemains;
+                            remains[HeavyOilId] = heavyRemains;
+                            remains[LightOilId] = lightRemains;
                             countFactoriesByRecipeFlagged = new Dictionary<int, int>
                             {
                                 { AdvancedOilProcessingRecipeId, aopFactoryCount },
@@ -228,12 +229,7 @@ namespace FactorioHelper
 
             return new OilProductionOutput
             {
-                RemainsPerSec = new Dictionary<int, Fraction>
-                {
-                    { PetroleumGasId, gazTotalRemains },
-                    { HeavyOilId, heavyTotalRemains },
-                    { LightOilId, lightTotalRemains }
-                },
+                RemainsPerSec = remains,
                 ChemicalPlantRequirements = countFactoriesByRecipeFlagged
                     .Where(kvp => kvp.Value > 0 && recipes[kvp.Key].BuildType == ItemBuildType.ChemicalPlant)
                     .ToDictionary(x => x.Key, x => x.Value),

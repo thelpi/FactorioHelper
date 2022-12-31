@@ -63,13 +63,6 @@ namespace FactorioHelper
                 return;
             }
 
-            if (targetPerSec >= 3)
-            {
-                var response = MessageBox.Show("Beyond a rate of 3 p/s, the process is very slow. Are you sure?", "FactorioHelper", MessageBoxButton.YesNo);
-                if (response == MessageBoxResult.No)
-                    return;
-            }
-
             var itemId = (ItemsComboBox.SelectedItem as BaseItem).Id;
 
             _productionService.CrudeOilInitialYield = crudeOilInitialYield;

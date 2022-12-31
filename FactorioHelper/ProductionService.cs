@@ -175,45 +175,41 @@ namespace FactorioHelper
                 aopFactoriesCount <= maxAopFactoriesCount;
                 aopFactoriesCount++)
             {
-                // The minimal number of "HeavyOilCracking" factories to produce "light oil" requirements
-                var minHocFactoriesCountForLight = GetFactoriesCountAfterSettleAop(HeavyOilCrackingRecipeId, LightOilId, aopFactoriesCount, lightReqPerSec);
                 // The number of "LightOilCracking" factories to produce "petroleum gas" requirements
                 var locFactoriesCount = GetFactoriesCountAfterSettleAop(LightOilCrackingRecipeId, PetroleumGasId, aopFactoriesCount, gasReqPerSec);
-
-                // TODO: should be removable
-                var maxHocFactoriesCount = Math.Max(Math.Floor(targetPerSec.Decimal) * 100, 100);
                 
-                for (var hocFactoriesCount = minHocFactoriesCountForLight;
-                    hocFactoriesCount < maxHocFactoriesCount;
-                    hocFactoriesCount++)
-                {
-                    // sets the current count of factories
-                    recipesFactoriesCount[AdvancedOilProcessingRecipeId] = aopFactoriesCount;
-                    recipesFactoriesCount[LightOilCrackingRecipeId] = locFactoriesCount;
-                    recipesFactoriesCount[HeavyOilCrackingRecipeId] = hocFactoriesCount;
+                // The "light oil" requirements to produces the "petroleum gas" requirements
+                var lightReqPerSecForGas = recipes[LightOilCrackingRecipeId].GetSourcePerSec(LightOilId) * locFactoriesCount;
 
-                    // computes the related production
-                    var heavyRemains = GetDeltaPerSec(HeavyOilId) - heavyReqPerSec;
-                    var lightRemains = GetDeltaPerSec(LightOilId) - lightReqPerSec;
-                    var gazRemains = GetDeltaPerSec(PetroleumGasId) - gasReqPerSec;
-                    if (gazRemains >= 0 && heavyRemains >= 0 && lightRemains >= 0)
+                // The number of "HeavyOilCracking" factories to produce "light oil" requirements
+                var hocFactoriesCount = GetFactoriesCountAfterSettleAop(HeavyOilCrackingRecipeId, LightOilId, aopFactoriesCount, lightReqPerSec + lightReqPerSecForGas);
+
+                // sets the current count of factories
+                recipesFactoriesCount[AdvancedOilProcessingRecipeId] = aopFactoriesCount;
+                recipesFactoriesCount[LightOilCrackingRecipeId] = locFactoriesCount;
+                recipesFactoriesCount[HeavyOilCrackingRecipeId] = hocFactoriesCount;
+
+                // computes the related production
+                var heavyRemains = GetDeltaPerSec(HeavyOilId) - heavyReqPerSec;
+                var lightRemains = GetDeltaPerSec(LightOilId) - lightReqPerSec;
+                var gazRemains = GetDeltaPerSec(PetroleumGasId) - gasReqPerSec;
+                if (gazRemains >= 0 && heavyRemains >= 0 && lightRemains >= 0)
+                {
+                    // keeps the current production as "the one" if:
+                    // it's the first try
+                    // OR remains are lowest as possible
+                    if (recipesFactoriesCountFinal == null
+                        || remains.Values.FractionSum(x => x) > (gazRemains + heavyRemains + lightRemains).Decimal) // TODO: operator ">" on fractions
                     {
-                        // keeps the current production as "the one" if:
-                        // it's the first try
-                        // OR remains are lowest as possible
-                        if (recipesFactoriesCountFinal == null
-                            || remains.Values.FractionSum(x => x) > (gazRemains + heavyRemains + lightRemains).Decimal) // TODO: operator ">" on fractions
+                        remains[PetroleumGasId] = gazRemains;
+                        remains[HeavyOilId] = heavyRemains;
+                        remains[LightOilId] = lightRemains;
+                        recipesFactoriesCountFinal = new Dictionary<int, int>
                         {
-                            remains[PetroleumGasId] = gazRemains;
-                            remains[HeavyOilId] = heavyRemains;
-                            remains[LightOilId] = lightRemains;
-                            recipesFactoriesCountFinal = new Dictionary<int, int>
-                            {
-                                { AdvancedOilProcessingRecipeId, aopFactoriesCount },
-                                { LightOilCrackingRecipeId, locFactoriesCount },
-                                { HeavyOilCrackingRecipeId, hocFactoriesCount },
-                            };
-                        }
+                            { AdvancedOilProcessingRecipeId, aopFactoriesCount },
+                            { LightOilCrackingRecipeId, locFactoriesCount },
+                            { HeavyOilCrackingRecipeId, hocFactoriesCount },
+                        };
                     }
                 }
             }

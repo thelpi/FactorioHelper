@@ -153,8 +153,8 @@ namespace FactorioHelper
             Fraction gazTotalRemains = 0;
             Fraction heavyTotalRemains = 0;
             Fraction lightTotalRemains = 0;
+            Fraction totalRemains = 0;
             Dictionary<int, int> countFactoriesByRecipeFlagged = null;
-            var totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
 
             var countFactoriesByRecipe = recipes.ToDictionary(_ => _.Key, _ => 0);
 
@@ -163,12 +163,27 @@ namespace FactorioHelper
                 return recipes.Values.FractionSum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
             }
 
-            var minimalHeavyFactoriesCount = heavyReqPerSec == 0
-                ? 1
-                : (int)Math.Ceiling((heavyReqPerSec / recipes[AdvancedOilProcessingRecipeId].GetTargetPerSec(HeavyOilId)).Decimal);
+            int GetAdvancedOilProcessingFactoriesCount(Fraction reqPerSec, int oilId)
+            {
+                return reqPerSec == 0
+                    ? 1
+                    : (int)Math.Ceiling((reqPerSec / recipes[AdvancedOilProcessingRecipeId].GetTargetPerSec(oilId)).Decimal);
+            }
+
+            // The required count of factories for all the heavy oil is produced with "AdvancedOilProcessing" recipe
+            // it's minimal because the heavy oil is always produced that way
+            var minimalHeavyFromAOPFactoriesCount = GetAdvancedOilProcessingFactoriesCount(heavyReqPerSec, HeavyOilId);
+            // The required count of factories if all the light oil is produced with "AdvancedOilProcessing" recipe
+            var maximalLightFromAOPFactoriesCount = GetAdvancedOilProcessingFactoriesCount(lightReqPerSec, LightOilId);
+            // The required count of factories if all the petroleum gas is produced with "AdvancedOilProcessing" recipe
+            var maximalGasFromAOPFactoriesCount = GetAdvancedOilProcessingFactoriesCount(gazReqPerSec, PetroleumGasId);
+
+            var maximalAop = Math.Max(minimalHeavyFromAOPFactoriesCount,
+                Math.Max(maximalLightFromAOPFactoriesCount,
+                    maximalGasFromAOPFactoriesCount));
 
             var maxAttemps = Math.Max(Math.Floor(targetPerSec.Decimal) * 100, 100);
-            for (var j = minimalHeavyFactoriesCount; j < maxAttemps; j++)
+            for (var j = minimalHeavyFromAOPFactoriesCount; j <= maximalAop; j++)
             {
                 for (var k = 0; k < maxAttemps; k++)
                 {

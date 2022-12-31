@@ -120,8 +120,8 @@
                 <Button Grid.Column="1" Grid.Row="10" Content="Add module" Height="25" Width="100" HorizontalAlignment="Left" Name="AddModuleButton" Click="AddModuleButton_Click" />
                 <Button Grid.Column="0" Grid.Row="11" Grid.ColumnSpan="2" Width="200" Height="25" VerticalAlignment="Bottom" Content="Compute requirements" Name="CalculateButton" Click="CalculateButton_Click" />
             </Grid>
-            <StackPanel Orientation="Vertical" Name="ResultsPanel" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left">
-                <StackPanel Orientation="Horizontal">
+            <DockPanel Name="ResultsPanel" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
                     <ComboBox Width="250" Margin="0, 5, 0, 5" Height="40" VerticalContentAlignment="Center" Name="ProductionSelectionCombo" HorizontalAlignment="Left" SelectionChanged="ProductionSelectionCombo_SelectionChanged">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
@@ -134,7 +134,7 @@
                     </ComboBox>
                     <Button Margin="5, 0, 0, 0" HorizontalAlignment="Left" VerticalAlignment="Center" Content="x" Height="30" Width="30" Name="ProductionSelectRemoval" Click="ProductionSelectRemoval_Click" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
                 </StackPanel>
-                <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer DockPanel.Dock="Bottom" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
                     <ListView Name="ResultsListBox">
                         <ListView.View>
                             <GridView AllowsColumnReorder="False">
@@ -195,7 +195,7 @@
                         </ListView.View>
                     </ListView>
                 </ScrollViewer>
-            </StackPanel>
+            </DockPanel>
             <ScrollViewer Name="OilResultsScrollViewer" Visibility="Collapsed" Margin="25, 0, 0, 0" DockPanel.Dock="Left" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
                 <StackPanel Orientation="Vertical">
                     <Label Content="Recipes req. (refinery)" />

@@ -246,15 +246,4 @@ namespace FactorioHelper
             return true;
         }
     }
-
-    public static class LinqExtensions
-    {
-        public static Fraction FractionSum<T>(this IEnumerable<T> collection, Func<T, Fraction> projectionFunc)
-        {
-            var value = new Fraction(0);
-            foreach (var item in collection)
-                value += projectionFunc(item);
-            return value;
-        }
-    }
 }

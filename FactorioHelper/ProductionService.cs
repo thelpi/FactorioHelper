@@ -99,14 +99,14 @@ namespace FactorioHelper
         {
             var lightReqPerSec = GetOilRequirement(fromProduction, LightOilId);
             var heavyReqPerSec = GetOilRequirement(fromProduction, HeavyOilId);
-            var gazReqPerSec = GetOilRequirement(fromProduction, PetroleumGasId);
+            var gasReqPerSec = GetOilRequirement(fromProduction, PetroleumGasId);
 
             if (lightReqPerSec > 0 || heavyReqPerSec > 0)
             {
                 // required anyway
                 AdvancedOilProcessing = true;
             }
-            else if (gazReqPerSec == 0)
+            else if (gasReqPerSec == 0)
             {
                 return new OilProductionOutput
                 {
@@ -118,29 +118,7 @@ namespace FactorioHelper
 
             if (!AdvancedOilProcessing)
             {
-                var basicOilProcessingRecipe = GetRecipeById(BasicOilProcessingRecipeId);
-
-                var gazProdPerSec = basicOilProcessingRecipe.GetTargetPerSec(PetroleumGasId);
-
-                var refineryCountReq = (int)Math.Ceiling((gazReqPerSec / gazProdPerSec).Decimal);
-
-                fromProduction.Remove(PetroleumGasId);
-
-                var sourceItems = basicOilProcessingRecipe.SourceItems
-                    .Select(_ => new KeyValuePair<int, Fraction>(_.Key, basicOilProcessingRecipe.GetSourcePerSec(_.Key) * refineryCountReq))
-                    .ToList();
-
-                foreach (var sourceItem in sourceItems)
-                {
-                    AddOrUpdateItemProduction(fromProduction, sourceItem);
-                }
-
-                return new OilProductionOutput
-                {
-                    ChemicalPlantRequirements = new Dictionary<int, int>(),
-                    RefineryRequirements = new Dictionary<int, int> { { BasicOilProcessingRecipeId, refineryCountReq } },
-                    RemainsPerSec = new Dictionary<int, Fraction>()
-                };
+                return GetOilToProduceWithoutAdvancedProcessing(fromProduction, gasReqPerSec);
             }
 
             var recipes = new Dictionary<int, RecipeItem>
@@ -163,61 +141,76 @@ namespace FactorioHelper
                 return recipes.Values.FractionSum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
             }
 
-            int GetAdvancedOilProcessingFactoriesCount(Fraction reqPerSec, int oilId)
+            int GetFactoriesCount(int recipeId, Fraction reqPerSec, int oilId)
             {
-                return reqPerSec == 0
-                    ? 1
-                    : (int)Math.Ceiling((reqPerSec / recipes[AdvancedOilProcessingRecipeId].GetTargetPerSec(oilId)).Decimal);
+                return reqPerSec <= 0
+                    ? 0
+                    : (int)Math.Ceiling((reqPerSec / recipes[recipeId].GetTargetPerSec(oilId)).Decimal);
+            }
+
+            int GetFactoriesCountFromRemains(int recipeId, int oilId, int aopFactoryCount, Fraction reqPerSec)
+            {
+                var lightOilPerSecFromAop = recipes[AdvancedOilProcessingRecipeId].GetTargetPerSec(oilId) * aopFactoryCount;
+                var lightOilRemainToProduce = reqPerSec - lightOilPerSecFromAop;
+                return GetFactoriesCount(recipeId, lightOilRemainToProduce, oilId);
             }
 
             // The required count of factories for all the heavy oil is produced with "AdvancedOilProcessing" recipe
             // it's minimal because the heavy oil is always produced that way
-            var minimalHeavyFromAOPFactoriesCount = GetAdvancedOilProcessingFactoriesCount(heavyReqPerSec, HeavyOilId);
+            var minimalHeavyFromAOPFactoriesCount = GetFactoriesCount(AdvancedOilProcessingRecipeId, heavyReqPerSec, HeavyOilId);
             // The required count of factories if all the light oil is produced with "AdvancedOilProcessing" recipe
-            var maximalLightFromAOPFactoriesCount = GetAdvancedOilProcessingFactoriesCount(lightReqPerSec, LightOilId);
+            var maximalLightFromAOPFactoriesCount = GetFactoriesCount(AdvancedOilProcessingRecipeId, lightReqPerSec, LightOilId);
             // The required count of factories if all the petroleum gas is produced with "AdvancedOilProcessing" recipe
-            var maximalGasFromAOPFactoriesCount = GetAdvancedOilProcessingFactoriesCount(gazReqPerSec, PetroleumGasId);
+            var maximalGasFromAOPFactoriesCount = GetFactoriesCount(AdvancedOilProcessingRecipeId, gasReqPerSec, PetroleumGasId);
 
-            var maximalAop = Math.Max(minimalHeavyFromAOPFactoriesCount,
-                Math.Max(maximalLightFromAOPFactoriesCount,
-                    maximalGasFromAOPFactoriesCount));
+            // from all the above, computes the maximal count of AOP factories
+            var maximalAop = SystemExtensions.Max(
+                minimalHeavyFromAOPFactoriesCount,
+                maximalLightFromAOPFactoriesCount,
+                maximalGasFromAOPFactoriesCount);
 
-            var maxAttemps = Math.Max(Math.Floor(targetPerSec.Decimal) * 100, 100);
-            for (var j = minimalHeavyFromAOPFactoriesCount; j <= maximalAop; j++)
+            // We try several combination from the lowest count to the highest count
+            for (var aopFactoryCount = minimalHeavyFromAOPFactoriesCount;
+                aopFactoryCount <= maximalAop;
+                aopFactoryCount++)
             {
-                for (var k = 0; k < maxAttemps; k++)
-                {
-                    for (var l = 0; l < maxAttemps; l++)
-                    {
-                        countFactoriesByRecipe[AdvancedOilProcessingRecipeId] = j;
-                        countFactoriesByRecipe[LightOilCrackingRecipeId] = k;
-                        countFactoriesByRecipe[HeavyOilCrackingRecipeId] = l;
+                var minLightOilFactories = GetFactoriesCountFromRemains(HeavyOilCrackingRecipeId, LightOilId, aopFactoryCount, lightReqPerSec);
+                var minPetroleumGasFactories = GetFactoriesCountFromRemains(LightOilCrackingRecipeId, PetroleumGasId, aopFactoryCount, gasReqPerSec);
 
-                        var gazRemains = GetDeltaPerSec(PetroleumGasId) - gazReqPerSec;
-                        if (gazRemains >= 0)
+                // TODO: should be removable
+                var maxAttemps = Math.Max(Math.Floor(targetPerSec.Decimal) * 100, 100);
+                
+                for (var heavyOilCrackingFactoryCount = minLightOilFactories;
+                    heavyOilCrackingFactoryCount < maxAttemps;
+                    heavyOilCrackingFactoryCount++)
+                {
+                    // sets the current count of factories
+                    countFactoriesByRecipe[AdvancedOilProcessingRecipeId] = aopFactoryCount;
+                    countFactoriesByRecipe[LightOilCrackingRecipeId] = minPetroleumGasFactories;
+                    countFactoriesByRecipe[HeavyOilCrackingRecipeId] = heavyOilCrackingFactoryCount;
+
+                    // computes the related production
+                    var heavyRemains = GetDeltaPerSec(HeavyOilId) - heavyReqPerSec;
+                    var lightRemains = GetDeltaPerSec(LightOilId) - lightReqPerSec;
+                    var gazRemains = GetDeltaPerSec(PetroleumGasId) - gasReqPerSec;
+                    if (gazRemains >= 0 && heavyRemains >= 0 && lightRemains >= 0)
+                    {
+                        // keeps the current production as "the one" if:
+                        // it's the first try
+                        // OR remains are lowest as possible
+                        if (countFactoriesByRecipeFlagged == null
+                            || totalRemains > (gazRemains + heavyRemains + lightRemains).Decimal) // TODO: operator ">" on fractions
                         {
-                            var heavyRemains = GetDeltaPerSec(HeavyOilId) - heavyReqPerSec;
-                            if (heavyRemains >= 0)
+                            gazTotalRemains = gazRemains;
+                            heavyTotalRemains = heavyRemains;
+                            lightTotalRemains = lightRemains;
+                            totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
+                            countFactoriesByRecipeFlagged = new Dictionary<int, int>
                             {
-                                var lightRemains = GetDeltaPerSec(LightOilId) - lightReqPerSec;
-                                if (lightRemains >= 0)
-                                {
-                                    if (countFactoriesByRecipeFlagged == null
-                                        || totalRemains > (gazRemains + heavyRemains + lightRemains).Decimal) // lazy
-                                    {
-                                        gazTotalRemains = gazRemains;
-                                        heavyTotalRemains = heavyRemains;
-                                        lightTotalRemains = lightRemains;
-                                        totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
-                                        countFactoriesByRecipeFlagged = new Dictionary<int, int>
-                                        {
-                                            { AdvancedOilProcessingRecipeId, j },
-                                            { LightOilCrackingRecipeId, k },
-                                            { HeavyOilCrackingRecipeId, l },
-                                        };
-                                    }
-                                }
-                            }
+                                { AdvancedOilProcessingRecipeId, aopFactoryCount },
+                                { LightOilCrackingRecipeId, minPetroleumGasFactories },
+                                { HeavyOilCrackingRecipeId, heavyOilCrackingFactoryCount },
+                            };
                         }
                     }
                 }
@@ -233,24 +226,7 @@ namespace FactorioHelper
             AddOrUpdateItemProduction(fromProduction, new KeyValuePair<int, Fraction>(WaterId, waterConsome));
             AddOrUpdateItemProduction(fromProduction, new KeyValuePair<int, Fraction>(CrudeOilId, crudeConsome));
 
-            var chemicalPlantReq = new Dictionary<int, int>();
-            var refineryReq = new Dictionary<int, int>();
-            foreach (var recipeId in countFactoriesByRecipeFlagged.Keys)
-            {
-                if (countFactoriesByRecipeFlagged[recipeId] > 0)
-                {
-                    if (recipes[recipeId].BuildType == ItemBuildType.ChemicalPlant)
-                    {
-                        chemicalPlantReq.Add(recipeId, countFactoriesByRecipeFlagged[recipeId]);
-                    }
-                    else
-                    {
-                        refineryReq.Add(recipeId, countFactoriesByRecipeFlagged[recipeId]);
-                    }
-                }
-            }
-
-            var oilOutput = new OilProductionOutput
+            return new OilProductionOutput
             {
                 RemainsPerSec = new Dictionary<int, Fraction>
                 {
@@ -258,11 +234,40 @@ namespace FactorioHelper
                     { HeavyOilId, heavyTotalRemains },
                     { LightOilId, lightTotalRemains }
                 },
-                ChemicalPlantRequirements = chemicalPlantReq,
-                RefineryRequirements = refineryReq
+                ChemicalPlantRequirements = countFactoriesByRecipeFlagged
+                    .Where(kvp => kvp.Value > 0 && recipes[kvp.Key].BuildType == ItemBuildType.ChemicalPlant)
+                    .ToDictionary(x => x.Key, x => x.Value),
+                RefineryRequirements = countFactoriesByRecipeFlagged
+                    .Where(kvp => kvp.Value > 0 && recipes[kvp.Key].BuildType != ItemBuildType.ChemicalPlant)
+                    .ToDictionary(x => x.Key, x => x.Value)
             };
+        }
 
-            return oilOutput;
+        private OilProductionOutput GetOilToProduceWithoutAdvancedProcessing(Dictionary<int, ProductionItem> fromProduction, Fraction gasReqPerSec)
+        {
+            var basicOilProcessingRecipe = GetRecipeById(BasicOilProcessingRecipeId);
+
+            var gazProdPerSec = basicOilProcessingRecipe.GetTargetPerSec(PetroleumGasId);
+
+            var refineryCountReq = (int)Math.Ceiling((gasReqPerSec / gazProdPerSec).Decimal);
+
+            fromProduction.Remove(PetroleumGasId);
+
+            var sourceItems = basicOilProcessingRecipe.SourceItems
+                .Select(_ => new KeyValuePair<int, Fraction>(_.Key, basicOilProcessingRecipe.GetSourcePerSec(_.Key) * refineryCountReq))
+                .ToList();
+
+            foreach (var sourceItem in sourceItems)
+            {
+                AddOrUpdateItemProduction(fromProduction, sourceItem);
+            }
+
+            return new OilProductionOutput
+            {
+                ChemicalPlantRequirements = new Dictionary<int, int>(),
+                RefineryRequirements = new Dictionary<int, int> { { BasicOilProcessingRecipeId, refineryCountReq } },
+                RemainsPerSec = new Dictionary<int, Fraction>()
+            };
         }
 
         private void AddOrUpdateItemProduction(Dictionary<int, ProductionItem> fromProduction, KeyValuePair<int, Fraction> sourceItem)

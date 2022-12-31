@@ -143,11 +143,11 @@ namespace FactorioHelper
                 };
             }
 
-            var recipes = new[]
+            var recipes = new Dictionary<int, RecipeItem>
             {
-                GetRecipeById(AdvancedOilProcessingRecipeId),
-                GetRecipeById(LightOilCrackingRecipeId),
-                GetRecipeById(HeavyOilCrackingRecipeId)
+                { AdvancedOilProcessingRecipeId, GetRecipeById(AdvancedOilProcessingRecipeId) },
+                { LightOilCrackingRecipeId, GetRecipeById(LightOilCrackingRecipeId) },
+                { HeavyOilCrackingRecipeId, GetRecipeById(HeavyOilCrackingRecipeId) }
             };
 
             Fraction gazTotalRemains = 0;
@@ -156,16 +156,16 @@ namespace FactorioHelper
             Dictionary<int, int> countFactoriesByRecipeFlagged = null;
             var totalRemains = gazTotalRemains + heavyTotalRemains + lightTotalRemains;
 
-            var countFactoriesByRecipe = recipes.ToDictionary(_ => _.Id, _ => 0);
+            var countFactoriesByRecipe = recipes.ToDictionary(_ => _.Key, _ => 0);
 
             Fraction GetDeltaPerSec(int id)
             {
-                return recipes.FractionSum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
+                return recipes.Values.FractionSum(_ => _.GetDeltaPerSec(id) * countFactoriesByRecipe[_.Id]);
             }
 
             var minimalHeavyFactoriesCount = heavyReqPerSec == 0
                 ? 1
-                : (int)Math.Ceiling((heavyReqPerSec / recipes.Single(_ => _.Id == AdvancedOilProcessingRecipeId).GetTargetPerSec(HeavyOilId)).Decimal);
+                : (int)Math.Ceiling((heavyReqPerSec / recipes[AdvancedOilProcessingRecipeId].GetTargetPerSec(HeavyOilId)).Decimal);
 
             var maxAttemps = Math.Max(Math.Floor(targetPerSec.Decimal) * 100, 100);
             for (var j = minimalHeavyFactoriesCount; j < maxAttemps; j++)
@@ -208,8 +208,8 @@ namespace FactorioHelper
                 }
             }
 
-            var crudeConsome = recipes.FractionSum(_ => _.GetSourcePerSec(CrudeOilId) * countFactoriesByRecipeFlagged[_.Id]);
-            var waterConsome = recipes.FractionSum(_ => _.GetSourcePerSec(WaterId) * countFactoriesByRecipeFlagged[_.Id]);
+            var crudeConsome = recipes.Values.FractionSum(_ => _.GetSourcePerSec(CrudeOilId) * countFactoriesByRecipeFlagged[_.Id]);
+            var waterConsome = recipes.Values.FractionSum(_ => _.GetSourcePerSec(WaterId) * countFactoriesByRecipeFlagged[_.Id]);
 
             fromProduction.Remove(PetroleumGasId);
             fromProduction.Remove(HeavyOilId);
@@ -224,7 +224,7 @@ namespace FactorioHelper
             {
                 if (countFactoriesByRecipeFlagged[recipeId] > 0)
                 {
-                    if (recipes.First(_ => _.Id == recipeId).BuildType == ItemBuildType.ChemicalPlant)
+                    if (recipes[recipeId].BuildType == ItemBuildType.ChemicalPlant)
                     {
                         chemicalPlantReq.Add(recipeId, countFactoriesByRecipeFlagged[recipeId]);
                     }

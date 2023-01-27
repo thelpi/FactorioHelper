@@ -33,10 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MySql.Data, Version=5.2.3.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\TheTennisProject\TheTennisProject\bin\Debug\MySql.Data.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -89,8 +85,6 @@
     <Compile Include="Items\RecipeItem.cs" />
     <Compile Include="Items\RefiningItem.cs" />
     <Compile Include="ModuleConfiguration.cs" />
-    <Compile Include="MySqlDataProvider.cs" />
-    <Compile Include="IDataProvider.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -121,6 +115,11 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <None Include="Resources\components.csv" />
+    <None Include="Resources\items.csv" />
+    <None Include="Resources\recipes.csv" />
+    <None Include="Resources\recipes_sources.csv" />
+    <None Include="Resources\recipes_targets.csv" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -213,7 +212,6 @@
     <Resource Include="Pictures\Items\56.png" />
     <Resource Include="Pictures\BuildTypes\8.png" />
     <Resource Include="Pictures\BuildTypes\9.png" />
-    <Content Include="Scripts\factorio.sql" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

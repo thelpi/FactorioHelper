@@ -19,18 +19,11 @@ namespace FactorioHelper
         private readonly ProductionService _productionService;
         private readonly ObservableCollection<ModuleConfiguration> _modules;
 
-        private Properties.Settings Settings => Properties.Settings.Default;
-
         public MainWindow()
         {
             InitializeComponent();
 
-            _productionService = new ProductionService(
-                new MySqlDataProvider(
-                    Settings.sqlServer,
-                    Settings.sqlDatabase,
-                    Settings.sqlUid,
-                    Settings.sqlPwd));
+            _productionService = new ProductionService();
             _modules = new ObservableCollection<ModuleConfiguration>();
 
             MiningDrillTypeComboBox.ItemsSource = Enum.GetValues(typeof(MiningDrillType));
@@ -87,7 +80,7 @@ namespace FactorioHelper
             {
                 _productionService.SetModulesConfiguration(modulesList);
                 var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
-                var oilProduction = _productionService.GetOilToProduce(targetPerSec, production);
+                var oilProduction = _productionService.GetOilToProduce(production);
                 dwe.Result = new Tuple<IEnumerable<ProductionItem>, OilProductionOutput>(production.Values, oilProduction);
             };
             worker.RunWorkerCompleted += (object _, RunWorkerCompletedEventArgs rwce) =>

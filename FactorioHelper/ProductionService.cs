@@ -57,8 +57,6 @@ namespace FactorioHelper
                 { ItemBuildType.Pumpjack, x => x.ToItem<PumpjackItem>() }
             };
 
-        private readonly IDataProvider _dataProvider;
-
         public FurnaceType FurnaceType { get; set; }
         public MiningDrillType MiningDrillType { get; set; }
         public int MiningBonus { get; set; }
@@ -69,9 +67,42 @@ namespace FactorioHelper
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> StandardModulesConfiguration { get; private set; }
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> OilRecipesModulesConfiguration { get; private set; }
 
-        internal ProductionService(IDataProvider dataProvider)
+        private readonly IReadOnlyCollection<Item> _allItems;
+        private readonly IReadOnlyCollection<RecipeItem> _recipes;
+        private readonly IReadOnlyCollection<Tuple<int, int, int>> _recipesSources;
+        private readonly IReadOnlyCollection<Tuple<int, int,int>> _recipesTargets;
+        private readonly IReadOnlyCollection<Tuple<int, int, Fraction>> _components;
+
+        public ProductionService()
         {
-            _dataProvider = dataProvider;
+            _allItems = GetDatas("items", data =>
+                new Item
+                {
+                    Id = Convert.ToInt32(data[0]),
+                    Name = data[1],
+                    BuildResult = Convert.ToInt32(data[3]),
+                    BuildTime = Convert.ToDecimal(data[2].Replace('.', ',')),
+                    BuildType = (ItemBuildType)Convert.ToInt32(data[4]),
+                    ApplyRealRequirement = Convert.ToInt32(data[5]) != 0
+                });
+
+            _recipes = GetDatas("recipes", data =>
+                new RecipeItem
+                {
+                    BuildTime = Convert.ToDecimal(data[3].Replace('.', ',')),
+                    BuildType = (ItemBuildType)Convert.ToInt32(data[2]),
+                    Id = Convert.ToInt32(data[0]),
+                    Name = data[1]
+                });
+
+            _recipesSources = GetDatas("recipes_sources", data =>
+                new Tuple<int, int, int>(Convert.ToInt32(data[0]), Convert.ToInt32(data[1]), Convert.ToInt32(data[2])));
+
+            _recipesTargets = GetDatas("recipes_targets", data =>
+                new Tuple<int, int, int>(Convert.ToInt32(data[0]), Convert.ToInt32(data[1]), Convert.ToInt32(data[2])));
+
+            _components = GetDatas("components", data =>
+                new Tuple<int, int, Fraction>(Convert.ToInt32(data[0]), Convert.ToInt32(data[1]), Convert.ToInt32(data[2])));
         }
 
         internal void SetModulesConfiguration(IReadOnlyCollection<ModuleConfiguration> modulesConfiguration)
@@ -95,7 +126,7 @@ namespace FactorioHelper
                     as IReadOnlyCollection<KeyValuePair<ModuleType, int>>);
         }
 
-        internal OilProductionOutput GetOilToProduce(Fraction targetPerSec, Dictionary<int, ProductionItem> fromProduction)
+        internal OilProductionOutput GetOilToProduce(Dictionary<int, ProductionItem> fromProduction)
         {
             var lightReqPerSec = GetOilRequirement(fromProduction, LightOilId);
             var heavyReqPerSec = GetOilRequirement(fromProduction, HeavyOilId);
@@ -323,21 +354,14 @@ namespace FactorioHelper
 
         internal IReadOnlyCollection<BaseItem> GetBaseItemsList()
         {
-            var items = _dataProvider
-                .GetDatas(
-                    "SELECT id, name FROM item",
-                    _ => new BaseItem
-                    {
-                        Id = _.Get<int>("id"),
-                        Name = _.Get<string>("name")
-                    }).ToList();
+            var baseItems = _allItems.Cast<BaseItem>().ToList();
 
             foreach (var spgId in SciencePackGroups.Keys)
             {
-                items.Insert(0, new BaseItem { Id = spgId, Name = SciencePackGroups[spgId] });
+                baseItems.Insert(0, new BaseItem { Id = spgId, Name = SciencePackGroups[spgId] });
             }
 
-            return items;
+            return baseItems;
         }
 
         private List<Item> GetFullListOfItemsToProduce(int itemId)
@@ -373,25 +397,11 @@ namespace FactorioHelper
 
         private Item GetItemById(int itemId)
         {
-            var item = _dataProvider
-                .GetData(
-                    $"SELECT id, name, build_time, build_result, build_type_id, apply_real_requirement FROM item WHERE id = {itemId}",
-                    _ =>
-                    {
-                        var localItem = new Item
-                        {
-                            Id = _.Get<int>("id"),
-                            Name = _.Get<string>("name"),
-                            BuildResult = _.Get<int>("build_result"),
-                            BuildTime = _.Get<decimal>("build_time"),
-                            BuildType = (ItemBuildType)_.Get<int>("build_type_id"),
-                            ApplyRealRequirement = _.Get<byte>("apply_real_requirement") != 0
-                        };
+            var item = _allItems.First(x => x.Id == itemId);
 
-                        return SpecificItemTypes.ContainsKey(localItem.BuildType)
-                            ? SpecificItemTypes[localItem.BuildType](localItem)
-                            : localItem;
-                    });
+            item = SpecificItemTypes.ContainsKey(item.BuildType)
+                ? SpecificItemTypes[item.BuildType](item)
+                : item;
 
             if (itemId == SolidFuelId)
             {
@@ -407,13 +417,9 @@ namespace FactorioHelper
             }
             else
             {
-                item.Composition = _dataProvider
-                    .GetDatas(
-                        $"SELECT source_item_id, quantity FROM component WHERE target_item_id = {itemId}",
-                        _ => new KeyValuePair<int, Fraction>(
-                            _.Get<int>("source_item_id"),
-                            _.Get<int>("quantity")))
-                    .ToDictionary(_ => _.Key, _ => _.Value);
+                item.Composition = _components
+                    .Where(x => x.Item1 == itemId)
+                    .ToDictionary(x => x.Item2, x => x.Item3);
             }
 
             return item;
@@ -421,28 +427,15 @@ namespace FactorioHelper
 
         private RecipeItem GetRecipeById(int recipeId)
         {
-            var recipe = _dataProvider
-                .GetData(
-                    $"SELECT id, name, build_time, build_type_id FROM recipe WHERE id = {recipeId}",
-                    _ => new RecipeItem
-                    {
-                        BuildTime = _.Get<decimal>("build_time"),
-                        BuildType = (ItemBuildType)_.Get<int>("build_type_id"),
-                        Id = _.Get<int>("id"),
-                        Name = _.Get<string>("name")
-                    });
+            var recipe = _recipes.First(x => x.Id == recipeId);
 
-            recipe.SourceItems = _dataProvider
-                .GetDatas(
-                    $"SELECT item_id, quantity FROM recipe_source WHERE recipe_id = {recipeId}",
-                    _ => new KeyValuePair<int, int>(_.Get<int>("item_id"), _.Get<int>("quantity")))
-                .ToDictionary(_ => _.Key, _ => _.Value);
+            recipe.SourceItems = _recipesSources
+                .Where(x => x.Item1 == recipeId)
+                .ToDictionary(_ => _.Item2, _ => _.Item3);
 
-            recipe.TargetItems = _dataProvider
-                .GetDatas(
-                    $"SELECT item_id, quantity FROM recipe_target WHERE recipe_id = {recipeId}",
-                    _ => new KeyValuePair<int, int>(_.Get<int>("item_id"), _.Get<int>("quantity")))
-                .ToDictionary(_ => _.Key, _ => _.Value);
+            recipe.TargetItems = _recipesTargets
+                .Where(x => x.Item1 == recipeId)
+                .ToDictionary(_ => _.Item2, _ => _.Item3);
 
             return recipe;
         }
@@ -494,6 +487,15 @@ namespace FactorioHelper
                     currentItemIsSuitable = true;
                 }
             }
+        }
+
+        private static List<T> GetDatas<T>(string resourceName, Func<string[], T> converter)
+        {
+            return Properties.Resources.ResourceManager
+                .GetString(resourceName)
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(row => converter(row.Split(',')))
+                .ToList();
         }
     }
 }

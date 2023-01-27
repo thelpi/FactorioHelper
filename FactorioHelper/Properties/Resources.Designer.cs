@@ -8,10 +8,10 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace FactorioHelper.Properties
-{
-
-
+namespace FactorioHelper.Properties {
+    using System;
+    
+    
     /// <summary>
     ///   Une classe de ressource fortement typée destinée, entre autres, à la consultation des chaînes localisées.
     /// </summary>
@@ -19,52 +19,187 @@ namespace FactorioHelper.Properties
     // à l'aide d'un outil, tel que ResGen ou Visual Studio.
     // Pour ajouter ou supprimer un membre, modifiez votre fichier .ResX, puis réexécutez ResGen
     // avec l'option /str ou régénérez votre projet VS.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources
-    {
-
+    internal class Resources {
+        
         private static global::System.Resources.ResourceManager resourceMan;
-
+        
         private static global::System.Globalization.CultureInfo resourceCulture;
-
+        
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Resources()
-        {
+        internal Resources() {
         }
-
+        
         /// <summary>
         ///   Retourne l'instance ResourceManager mise en cache utilisée par cette classe.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager
-        {
-            get
-            {
-                if ((resourceMan == null))
-                {
+        internal static global::System.Resources.ResourceManager ResourceManager {
+            get {
+                if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("FactorioHelper.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
             }
         }
-
+        
         /// <summary>
         ///   Remplace la propriété CurrentUICulture du thread actuel pour toutes
         ///   les recherches de ressources à l'aide de cette classe de ressource fortement typée.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture
-        {
-            get
-            {
+        internal static global::System.Globalization.CultureInfo Culture {
+            get {
                 return resourceCulture;
             }
-            set
-            {
+            set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 1,2,1
+        ///1,3,1
+        ///2,6,1
+        ///3,4,2
+        ///4,5,1
+        ///7,8,1
+        ///7,9,1
+        ///8,3,1
+        ///8,4,1
+        ///9,3,1
+        ///9,4,1
+        ///9,10,1
+        ///10,4,1
+        ///10,11,3
+        ///11,2,1
+        ///12,13,2
+        ///12,14,1
+        ///12,15,1
+        ///13,16,5
+        ///14,4,5
+        ///14,18,10
+        ///15,2,5
+        ///15,19,1
+        ///15,20,1
+        ///16,17,2
+        ///19,4,4
+        ///20,4,5
+        ///21,22,3
+        ///21,23,2
+        ///21,24,1
+        ///22,10,2
+        ///22,11,4
+        ///22,25,2
+        ///23,3,1
+        ///23,20,1
+        ///23,27,2
+        ///24,26,30
+        ///24,44,30
+        ///25,18,1
+        ///25,26,20
+        ///27,4,1
+        ///28,29,1
+        ///28,30,1
+        ///28,31,30
+        ///29,16,10
+        ///29,20,10
+        ///29,22,5
+        ///30,10,5
+        ///30,22,5
+        ///31,17,1
+        ///31,20,1
+        ///31,32,1
+        ///32,4,1
+        ///33,34,2
+        ///33,35,1
+        ///33,36,3
+        ///34,10,20
+        ///34,22,2
+        ///34,37,5
+        ///35,10 [le reste de la chaîne a été tronqué]&quot;;.
+        /// </summary>
+        internal static string components {
+            get {
+                return ResourceManager.GetString("components", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 1,Automation science pack,5.0,1,1,0
+        ///2,Copper plate,3.2,1,3,0
+        ///3,Iron gear wheel,1.0,1,1,0
+        ///4,Iron plate,3.2,1,3,0
+        ///5,Iron ore,1.0,1,4,0
+        ///6,Copper ore,1.0,1,4,0
+        ///7,Logistic science pack,6.0,1,1,0
+        ///8,Transport belt,0.5,2,1,0
+        ///9,Inserter,0.5,1,1,0
+        ///10,Electronic circuit,0.5,1,1,0
+        ///11,Copper cable,0.5,2,1,0
+        ///12,Military science pack,10.0,2,1,0
+        ///13,Wall,0.5,1,1,0
+        ///14,Grenade,8.0,1,1,0
+        ///15,Piercing rounds magazine,3.0,1,1,0
+        ///16,Stone brick,3.2,1,3,0
+        ///17,Stone,1.0,1,4,0
+        ///18,Coal,1.0,1,4,0
+        ///19,Firearm magazine,1.0 [le reste de la chaîne a été tronqué]&quot;;.
+        /// </summary>
+        internal static string items {
+            get {
+                return ResourceManager.GetString("items", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 1,Basic oil processing,5,5.0
+        ///2,Advanced oil processing,5,5.0
+        ///3,Coal liquefaction,5,5.0
+        ///4,Light oil cracking,2,2.0
+        ///5,Heavy oil cracking,2,2.0.
+        /// </summary>
+        internal static string recipes {
+            get {
+                return ResourceManager.GetString("recipes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 1,43,100
+        ///2,43,100
+        ///2,44,50
+        ///3,18,10
+        ///3,41,25
+        ///3,45,50
+        ///4,42,30
+        ///4,44,30
+        ///5,41,40
+        ///5,44,30.
+        /// </summary>
+        internal static string recipes_sources {
+            get {
+                return ResourceManager.GetString("recipes_sources", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à 1,26,45
+        ///2,26,55
+        ///2,41,25
+        ///2,42,45
+        ///3,26,10
+        ///3,41,90
+        ///3,42,20
+        ///4,26,20
+        ///5,42,30.
+        /// </summary>
+        internal static string recipes_targets {
+            get {
+                return ResourceManager.GetString("recipes_targets", resourceCulture);
             }
         }
     }

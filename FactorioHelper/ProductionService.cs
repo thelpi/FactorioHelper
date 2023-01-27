@@ -57,25 +57,25 @@ namespace FactorioHelper
                 { ItemBuildType.Pumpjack, x => x.ToItem<PumpjackItem>() }
             };
 
+        private Dictionary<int, Fraction> _solidFuelRateConsumption;
+
         public FurnaceType FurnaceType { get; set; }
         public MiningDrillType MiningDrillType { get; set; }
         public int MiningBonus { get; set; }
         public AssemblingType AssemblingType { get; set; }
         public bool AdvancedOilProcessing { get; set; }
         public int CrudeOilInitialYield { get; set; }
-        public IReadOnlyDictionary<int, Fraction> SolidFuelRateConsumption { get; set; }
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> StandardModulesConfiguration { get; private set; }
         public IReadOnlyDictionary<ItemBuildType, IReadOnlyCollection<KeyValuePair<ModuleType, int>>> OilRecipesModulesConfiguration { get; private set; }
+        
+        public IReadOnlyDictionary<int, Fraction> SolidFuelRateConsumption => _solidFuelRateConsumption;
 
-        private readonly IReadOnlyCollection<Item> _allItems;
-        private readonly IReadOnlyCollection<RecipeItem> _recipes;
-        private readonly IReadOnlyCollection<Tuple<int, int, int>> _recipesSources;
-        private readonly IReadOnlyCollection<Tuple<int, int,int>> _recipesTargets;
-        private readonly IReadOnlyCollection<Tuple<int, int, Fraction>> _components;
+        private readonly IReadOnlyDictionary<int, Item> _items;
+        private readonly IReadOnlyDictionary<int, RecipeItem> _recipes;
 
-        public ProductionService()
+        internal ProductionService()
         {
-            _allItems = GetDatas("items", data =>
+            var items = GetDatas("items", data =>
                 new Item
                 {
                     Id = Convert.ToInt32(data[0]),
@@ -86,7 +86,26 @@ namespace FactorioHelper
                     ApplyRealRequirement = Convert.ToInt32(data[5]) != 0
                 });
 
-            _recipes = GetDatas("recipes", data =>
+            _items = items
+                .Select(item => SpecificItemTypes.ContainsKey(item.BuildType)
+                    ? SpecificItemTypes[item.BuildType](item)
+                    : item)
+                .ToDictionary(x => x.Id, x => x);
+
+            var components = GetDatas("components", data =>
+                new Tuple<int, int, Fraction>(Convert.ToInt32(data[0]), Convert.ToInt32(data[1]), Convert.ToInt32(data[2])));
+
+            foreach (var itemId in _items.Keys)
+            {
+                if (itemId != SolidFuelId)
+                {
+                    _items[itemId].Composition = components
+                        .Where(x => x.Item1 == itemId)
+                        .ToDictionary(x => x.Item2, x => x.Item3);
+                }
+            }
+
+            var recipes = GetDatas("recipes", data =>
                 new RecipeItem
                 {
                     BuildTime = Convert.ToDecimal(data[3].Replace('.', ',')),
@@ -95,14 +114,24 @@ namespace FactorioHelper
                     Name = data[1]
                 });
 
-            _recipesSources = GetDatas("recipes_sources", data =>
+            var recipesSources = GetDatas("recipes_sources", data =>
                 new Tuple<int, int, int>(Convert.ToInt32(data[0]), Convert.ToInt32(data[1]), Convert.ToInt32(data[2])));
 
-            _recipesTargets = GetDatas("recipes_targets", data =>
+            var recipesTargets = GetDatas("recipes_targets", data =>
                 new Tuple<int, int, int>(Convert.ToInt32(data[0]), Convert.ToInt32(data[1]), Convert.ToInt32(data[2])));
 
-            _components = GetDatas("components", data =>
-                new Tuple<int, int, Fraction>(Convert.ToInt32(data[0]), Convert.ToInt32(data[1]), Convert.ToInt32(data[2])));
+            foreach (var recipe in recipes)
+            {
+                recipe.SourceItems = recipesSources
+                    .Where(x => x.Item1 == recipe.Id)
+                    .ToDictionary(_ => _.Item2, _ => _.Item3);
+
+                recipe.TargetItems = recipesTargets
+                    .Where(x => x.Item1 == recipe.Id)
+                    .ToDictionary(_ => _.Item2, _ => _.Item3);
+            }
+
+            _recipes = recipes.ToDictionary(x => x.Id, x => x);
         }
 
         internal void SetModulesConfiguration(IReadOnlyCollection<ModuleConfiguration> modulesConfiguration)
@@ -124,6 +153,21 @@ namespace FactorioHelper
                     .Select(y => new KeyValuePair<ModuleType, int>(y.Key, y.Sum(z => z.Count)))
                     .ToList()
                     as IReadOnlyCollection<KeyValuePair<ModuleType, int>>);
+        }
+
+        internal void SetSolidFuelRateConsumption(Dictionary<int, Fraction> solidFuelRateConsumption)
+        {
+            _solidFuelRateConsumption = solidFuelRateConsumption;
+
+            var dic = new Dictionary<int, Fraction>(3);
+            foreach (var k in SolidFuelRequirements.Keys)
+            {
+                if (SolidFuelRateConsumption.ContainsKey(k) && SolidFuelRateConsumption[k] > 0)
+                {
+                    dic.Add(k, SolidFuelRequirements[k] * SolidFuelRateConsumption[k]);
+                }
+            }
+            _items[SolidFuelId].Composition = dic;
         }
 
         internal OilProductionOutput GetOilToProduce(Dictionary<int, ProductionItem> fromProduction)
@@ -154,9 +198,9 @@ namespace FactorioHelper
 
             var recipes = new Dictionary<int, RecipeItem>
             {
-                { AdvancedOilProcessingRecipeId, GetRecipeById(AdvancedOilProcessingRecipeId) },
-                { LightOilCrackingRecipeId, GetRecipeById(LightOilCrackingRecipeId) },
-                { HeavyOilCrackingRecipeId, GetRecipeById(HeavyOilCrackingRecipeId) }
+                { AdvancedOilProcessingRecipeId, _recipes[AdvancedOilProcessingRecipeId] },
+                { LightOilCrackingRecipeId, _recipes[LightOilCrackingRecipeId] },
+                { HeavyOilCrackingRecipeId, _recipes[HeavyOilCrackingRecipeId] }
             };
 
             var remains = new Dictionary<int, Fraction>
@@ -268,9 +312,45 @@ namespace FactorioHelper
             };
         }
 
+        internal Dictionary<int, ProductionItem> GetItemsToProduce(Fraction targetPerSec, int itemId)
+        {
+            var itemsToProduce = GetFullListOfItemsToProduce(itemId);
+
+            var itemsResult = new Dictionary<int, ProductionItem>();
+
+            var i = 0;
+            while (i < itemsToProduce.Count)
+            {
+                CheckSuitableItem(itemsToProduce, itemsResult, i);
+
+                var item = itemsToProduce[i];
+
+                var itemTargetPerSec = (item.Id == itemId || (itemId < 0 && SciencePackGroupsItems[itemId].Contains(item.Id)))
+                    ? targetPerSec
+                    : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
+
+                AddOrUpdateItemRequirements(itemsResult, itemTargetPerSec, item);
+                i++;
+            }
+
+            return itemsResult;
+        }
+
+        internal IReadOnlyCollection<BaseItem> GetBaseItemsList()
+        {
+            var baseItems = _items.Values.Cast<BaseItem>().ToList();
+
+            foreach (var spgId in SciencePackGroups.Keys)
+            {
+                baseItems.Insert(0, new BaseItem { Id = spgId, Name = SciencePackGroups[spgId] });
+            }
+
+            return baseItems;
+        }
+
         private OilProductionOutput GetOilToProduceWithoutAdvancedProcessing(Dictionary<int, ProductionItem> fromProduction, Fraction gasReqPerSec)
         {
-            var basicOilProcessingRecipe = GetRecipeById(BasicOilProcessingRecipeId);
+            var basicOilProcessingRecipe = _recipes[BasicOilProcessingRecipeId];
 
             var gazProdPerSec = basicOilProcessingRecipe.GetTargetPerSec(PetroleumGasId);
 
@@ -297,7 +377,7 @@ namespace FactorioHelper
 
         private void AddOrUpdateItemProduction(Dictionary<int, ProductionItem> fromProduction, KeyValuePair<int, Fraction> sourceItem)
         {
-            var itembaseInfo = GetItemById(sourceItem.Key);
+            var itembaseInfo = _items[sourceItem.Key];
             AddOrUpdateItemRequirements(fromProduction, sourceItem.Value, itembaseInfo);
         }
 
@@ -328,53 +408,17 @@ namespace FactorioHelper
             return (fromProduction.ContainsKey(oilId) ? fromProduction[oilId] : null)?.PerSecQuantityRequirement ?? 0;
         }
 
-        internal Dictionary<int, ProductionItem> GetItemsToProduce(Fraction targetPerSec, int itemId)
-        {
-            var itemsToProduce = GetFullListOfItemsToProduce(itemId);
-
-            var itemsResult = new Dictionary<int, ProductionItem>();
-
-            var i = 0;
-            while (i < itemsToProduce.Count)
-            {
-                CheckSuitableItem(itemsToProduce, itemsResult, i);
-
-                var item = itemsToProduce[i];
-
-                var itemTargetPerSec = (item.Id == itemId || (itemId < 0 && SciencePackGroupsItems[itemId].Contains(item.Id)))
-                    ? targetPerSec
-                    : GetItemPerSecFromParents(itemsToProduce, itemsResult, item);
-
-                AddOrUpdateItemRequirements(itemsResult, itemTargetPerSec, item);
-                i++;
-            }
-
-            return itemsResult;
-        }
-
-        internal IReadOnlyCollection<BaseItem> GetBaseItemsList()
-        {
-            var baseItems = _allItems.Cast<BaseItem>().ToList();
-
-            foreach (var spgId in SciencePackGroups.Keys)
-            {
-                baseItems.Insert(0, new BaseItem { Id = spgId, Name = SciencePackGroups[spgId] });
-            }
-
-            return baseItems;
-        }
-
         private List<Item> GetFullListOfItemsToProduce(int itemId)
         {
             var itemsToProduce = new List<Item>();
 
             if (itemId < 0)
             {
-                itemsToProduce.AddRange(SciencePackGroupsItems[itemId].Select(GetItemById));
+                itemsToProduce.AddRange(SciencePackGroupsItems[itemId].Select(x => _items[x]));
             }
             else
             {
-                itemsToProduce.Add(GetItemById(itemId));
+                itemsToProduce.Add(_items[itemId]);
             }
 
             var currentItemIndex = 0;
@@ -385,7 +429,7 @@ namespace FactorioHelper
                 {
                     if (!itemsToProduce.Any(_ => _.Id == subItemId))
                     {
-                        var subItem = GetItemById(subItemId);
+                        var subItem = _items[subItemId];
                         itemsToProduce.Add(subItem);
                     }
                 }
@@ -393,51 +437,6 @@ namespace FactorioHelper
             }
 
             return itemsToProduce;
-        }
-
-        private Item GetItemById(int itemId)
-        {
-            var item = _allItems.First(x => x.Id == itemId);
-
-            item = SpecificItemTypes.ContainsKey(item.BuildType)
-                ? SpecificItemTypes[item.BuildType](item)
-                : item;
-
-            if (itemId == SolidFuelId)
-            {
-                var dic = new Dictionary<int, Fraction>(3);
-                foreach (var k in SolidFuelRequirements.Keys)
-                {
-                    if (SolidFuelRateConsumption.ContainsKey(k) && SolidFuelRateConsumption[k] > 0)
-                    {
-                        dic.Add(k, SolidFuelRequirements[k] * SolidFuelRateConsumption[k]);
-                    }
-                }
-                item.Composition = dic;
-            }
-            else
-            {
-                item.Composition = _components
-                    .Where(x => x.Item1 == itemId)
-                    .ToDictionary(x => x.Item2, x => x.Item3);
-            }
-
-            return item;
-        }
-
-        private RecipeItem GetRecipeById(int recipeId)
-        {
-            var recipe = _recipes.First(x => x.Id == recipeId);
-
-            recipe.SourceItems = _recipesSources
-                .Where(x => x.Item1 == recipeId)
-                .ToDictionary(_ => _.Item2, _ => _.Item3);
-
-            recipe.TargetItems = _recipesTargets
-                .Where(x => x.Item1 == recipeId)
-                .ToDictionary(_ => _.Item2, _ => _.Item3);
-
-            return recipe;
         }
 
         private Fraction GetItemPerSecFromParents(

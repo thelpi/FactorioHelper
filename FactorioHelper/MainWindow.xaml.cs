@@ -64,12 +64,12 @@ namespace FactorioHelper
             _productionService.MiningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
             _productionService.MiningBonus = MiningBonusComboBox.SelectedIndex;
             _productionService.AdvancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
-            _productionService.SolidFuelRateConsumption = new Dictionary<int, Fraction>
+            _productionService.SetSolidFuelRateConsumption(new Dictionary<int, Fraction>
             {
                 { ProductionService.HeavyOilId, solidFuelHeavyRate },
                 { ProductionService.LightOilId, solidFuelLightRate },
                 { ProductionService.PetroleumGasId, 1 - (solidFuelLightRate + solidFuelHeavyRate) }
-            };
+            });
             var modulesList = _modules.ToList();
 
             Loadingbar.Visibility = Visibility.Visible;

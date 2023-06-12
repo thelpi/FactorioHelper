@@ -10,6 +10,7 @@ namespace FactorioHelper.Items
 
         public Fraction MachineRequirementRate => RealMachineRequirement / MachineRequirement;
         public int MachineRequirement => (int)Math.Ceiling(RealMachineRequirement.Decimal);
+        public string MachineRequirementString => MachineRequirement.ToString().PadLeft(5, ' ');
         public Fraction RealMachineRequirement { get; set; }
         public int TotalQuantityRequirement { get; set; }
         public Fraction PerSecQuantityRequirement { get; set; }

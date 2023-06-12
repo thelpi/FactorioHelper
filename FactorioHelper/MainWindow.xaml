@@ -162,7 +162,7 @@
                                 <GridViewColumn Header="Fact. req.">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Label HorizontalContentAlignment="Right" Width="30" VerticalAlignment="Center" Content="{Binding Path=MachineRequirement}" Background="{Binding Path=MachineRequirementRate, Converter={StaticResource efficiencyRateConverter}}" ToolTip="{Binding Path=MachineRequirementRate}" />
+                                            <Label HorizontalContentAlignment="Right" VerticalAlignment="Center" Content="{Binding Path=MachineRequirementString}" Background="{Binding Path=MachineRequirementRate, Converter={StaticResource efficiencyRateConverter}}" ToolTip="{Binding Path=MachineRequirementRate}" />
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>

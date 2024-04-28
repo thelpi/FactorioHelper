@@ -7,6 +7,23 @@ namespace FactorioHelper
 {
     public static class EnumExtensions
     {
+        public static Fraction GetRate(this InserterType inserterType)
+        {
+            switch (inserterType)
+            {
+                case InserterType.Burner:
+                    return 0;
+                case InserterType.Fast:
+                case InserterType.Filter:
+                    return 0;
+                case InserterType.Stack:
+                case InserterType.StackFilter:
+                    return 0;
+                default: // Standard & LongHanded
+                    return 0;
+            }
+        }
+
         public static Fraction GetRate(this FurnaceType furnaceType)
         {
             switch (furnaceType)

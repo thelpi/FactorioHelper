@@ -141,14 +141,14 @@
                                 <GridViewColumn Header="Type">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Image Width="30" Height="30" Source="{Binding Path=BuildType, Converter={StaticResource buildTypeImageConverter}}" />
+                                            <Image Width="30" Height="30" Source="{Binding Path=Key, Converter={StaticResource buildTypeImageConverter}}" />
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                                 <GridViewColumn Header="Count">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Label Content="{Binding Path=Count}" VerticalAlignment="Center" />
+                                            <Label Content="{Binding Path=Value}" VerticalAlignment="Center" />
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>

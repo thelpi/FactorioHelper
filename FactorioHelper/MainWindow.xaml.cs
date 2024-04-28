@@ -38,7 +38,7 @@ namespace FactorioHelper
             FurnaceTypeComboBox.SelectedIndex = 2;
             AssemblingTypeComboBox.SelectedIndex = 1;
             MiningBonusComboBox.SelectedIndex = 2;
-            TargetPerSecText.Text = 1.2M.ToString(CultureInfo.InvariantCulture);
+            TargetPerSecText.Text = 0.8M.ToString(CultureInfo.InvariantCulture);
             AdvancedRefiningCheckBox.IsChecked = true;
             CrudeOilInitialYieldText.Text = 500.ToString();
             SolidFuelHeavyRate.Text = "0/3";
@@ -78,38 +78,20 @@ namespace FactorioHelper
             var worker = new BackgroundWorker();
             worker.DoWork += (object _, DoWorkEventArgs dwe) =>
             {
-                _productionService.SetModulesConfiguration(modulesList);
-                var production = _productionService.GetItemsToProduce(targetPerSec, itemId);
-                var oilProduction = _productionService.GetOilToProduce(production);
-                dwe.Result = new Tuple<IEnumerable<ProductionItem>, OilProductionOutput>(production.Values, oilProduction);
+                dwe.Result = _productionService.ComputeProduction(itemId, targetPerSec, modulesList);
             };
             worker.RunWorkerCompleted += (object _, RunWorkerCompletedEventArgs rwce) =>
             {
-                var actualResult = rwce.Result as Tuple<IEnumerable<ProductionItem>, OilProductionOutput>;
+                var actualResult = (ProductionResult)rwce.Result;
 
-                // TODO: creates a real object
-                // move into service
-                // exclude silo double count
-                var itemBuildTypes = EnumExtensions.Values<ItemBuildType>()
-                    .Select(x => new
-                    {
-                        BuildType = x,
-                        Count = actualResult.Item1.Where(i => i.BuildType == x).Sum(i => i.MachineRequirement)
-                            + (x == ItemBuildType.Refining ? actualResult.Item2.RefineryRequirements.Sum(kvp => kvp.Value) : 0)
-                            + (x == ItemBuildType.ChemicalPlant ? actualResult.Item2.ChemicalPlantRequirements.Sum(kvp => kvp.Value) : 0)
-                    })
-                    .Where(x => x.Count > 0)
-                    .ToList();
-
-                DataContext = actualResult;
-                ProductionSelectionCombo.ItemsSource = actualResult.Item1;
-                ResultsListBox.ItemsSource = actualResult.Item1;
-                ItemBuildTypesListBox.ItemsSource = itemBuildTypes;
+                ProductionSelectionCombo.ItemsSource = actualResult.ItemsToProduce;
+                ResultsListBox.ItemsSource = actualResult.ItemsToProduce;
+                ItemBuildTypesListBox.ItemsSource = actualResult.ItemBuildTypesCount;
                 ResultsPanel.Visibility = Visibility.Visible;
 
-                OilRemainsListBox.ItemsSource = actualResult.Item2.RemainsPerSec;
-                RefineryOilResultsListBox.ItemsSource = actualResult.Item2.RefineryRequirements;
-                ChemicalOilResultsListBox.ItemsSource = actualResult.Item2.ChemicalPlantRequirements;
+                OilRemainsListBox.ItemsSource = actualResult.OilProductionOutput.RemainsPerSec;
+                RefineryOilResultsListBox.ItemsSource = actualResult.OilProductionOutput.RefineryRequirements;
+                ChemicalOilResultsListBox.ItemsSource = actualResult.OilProductionOutput.ChemicalPlantRequirements;
                 OilResultsScrollViewer.Visibility = Visibility.Visible;
 
                 Loadingbar.Visibility = Visibility.Collapsed;

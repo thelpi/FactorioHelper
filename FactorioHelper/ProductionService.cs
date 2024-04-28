@@ -135,7 +135,74 @@ namespace FactorioHelper
             _recipes = recipes.ToDictionary(x => x.Id, x => x);
         }
 
-        internal void SetModulesConfiguration(IReadOnlyCollection<ModuleConfiguration> modulesConfiguration)
+        internal IReadOnlyCollection<BaseItem> GetBaseItemsList()
+        {
+            var baseItems = _items.Values.Cast<BaseItem>().ToList();
+
+            foreach (var spgId in SciencePackGroups.Keys)
+            {
+                baseItems.Insert(0, new BaseItem { Id = spgId, Name = SciencePackGroups[spgId] });
+            }
+
+            return baseItems;
+        }
+
+        internal void SetSolidFuelRateConsumption(Dictionary<int, Fraction> solidFuelRateConsumption)
+        {
+            _solidFuelRateConsumption = solidFuelRateConsumption;
+
+            var dic = new Dictionary<int, Fraction>(3);
+            foreach (var k in SolidFuelRequirements.Keys)
+            {
+                if (SolidFuelRateConsumption.ContainsKey(k) && SolidFuelRateConsumption[k] > 0)
+                {
+                    dic.Add(k, SolidFuelRequirements[k] * SolidFuelRateConsumption[k]);
+                }
+            }
+            _items[SolidFuelId].Composition = dic;
+        }
+
+        internal ProductionResult ComputeProduction(int itemId, Fraction targetPerSec, List<ModuleConfiguration> modulesList)
+        {
+            SetModulesConfiguration(modulesList);
+
+            var production = GetItemsToProduce(targetPerSec, itemId);
+
+            var oilProduction = GetOilToProduce(production);
+
+            var productionValues = production.Values.ToList();
+
+            var itemBuildTypes = EnumExtensions.Values<ItemBuildType>()
+                .Select(x => (x, ComputeBuildTypeCount(x, oilProduction, productionValues)))
+                .Where(x => x.Item2 > 0)
+                .ToDictionary(x => x.x, x => x.Item2);
+
+            return new ProductionResult
+            {
+                ItemBuildTypesCount = itemBuildTypes,
+                ItemsToProduce = productionValues,
+                OilProductionOutput = oilProduction
+            };
+        }
+
+        private static int ComputeBuildTypeCount(ItemBuildType x, OilProductionOutput oilProduction, List<ProductionItem> productionValues)
+        {
+            var count = productionValues.Where(i => i.BuildType == x).Sum(i => i.MachineRequirement);
+            switch (x)
+            {
+                case ItemBuildType.Refining:
+                    return count + oilProduction.RefineryRequirements.Sum(kvp => kvp.Value);
+                case ItemBuildType.ChemicalPlant:
+                    return count + oilProduction.ChemicalPlantRequirements.Sum(kvp => kvp.Value);
+                case ItemBuildType.RocketSilo:
+                    // note: the silo is used for both rocket parts and space science pack
+                    return count / 2;
+                default:
+                    return count;
+            }
+        }
+
+        private void SetModulesConfiguration(IReadOnlyCollection<ModuleConfiguration> modulesConfiguration)
         {
             StandardModulesConfiguration = modulesConfiguration
                 .Where(x => EnumExtensions.ModulableBuildTypes().Contains(x.BuildType)
@@ -156,22 +223,7 @@ namespace FactorioHelper
                     as IReadOnlyCollection<KeyValuePair<ModuleType, int>>);
         }
 
-        internal void SetSolidFuelRateConsumption(Dictionary<int, Fraction> solidFuelRateConsumption)
-        {
-            _solidFuelRateConsumption = solidFuelRateConsumption;
-
-            var dic = new Dictionary<int, Fraction>(3);
-            foreach (var k in SolidFuelRequirements.Keys)
-            {
-                if (SolidFuelRateConsumption.ContainsKey(k) && SolidFuelRateConsumption[k] > 0)
-                {
-                    dic.Add(k, SolidFuelRequirements[k] * SolidFuelRateConsumption[k]);
-                }
-            }
-            _items[SolidFuelId].Composition = dic;
-        }
-
-        internal OilProductionOutput GetOilToProduce(Dictionary<int, ProductionItem> fromProduction)
+        private OilProductionOutput GetOilToProduce(Dictionary<int, ProductionItem> fromProduction)
         {
             var lightReqPerSec = GetOilRequirement(fromProduction, LightOilId);
             var heavyReqPerSec = GetOilRequirement(fromProduction, HeavyOilId);
@@ -313,7 +365,7 @@ namespace FactorioHelper
             };
         }
 
-        internal Dictionary<int, ProductionItem> GetItemsToProduce(Fraction targetPerSec, int itemId)
+        private Dictionary<int, ProductionItem> GetItemsToProduce(Fraction targetPerSec, int itemId)
         {
             var itemsToProduce = GetFullListOfItemsToProduce(itemId);
 
@@ -335,18 +387,6 @@ namespace FactorioHelper
             }
 
             return itemsResult;
-        }
-
-        internal IReadOnlyCollection<BaseItem> GetBaseItemsList()
-        {
-            var baseItems = _items.Values.Cast<BaseItem>().ToList();
-
-            foreach (var spgId in SciencePackGroups.Keys)
-            {
-                baseItems.Insert(0, new BaseItem { Id = spgId, Name = SciencePackGroups[spgId] });
-            }
-
-            return baseItems;
         }
 
         private OilProductionOutput GetOilToProduceWithoutAdvancedProcessing(Dictionary<int, ProductionItem> fromProduction, Fraction gasReqPerSec)

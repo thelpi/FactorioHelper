@@ -87,9 +87,24 @@ namespace FactorioHelper
             {
                 var actualResult = rwce.Result as Tuple<IEnumerable<ProductionItem>, OilProductionOutput>;
 
+                // TODO: creates a real object
+                // move into service
+                // exclude silo double count
+                var itemBuildTypes = EnumExtensions.Values<ItemBuildType>()
+                    .Select(x => new
+                    {
+                        BuildType = x,
+                        Count = actualResult.Item1.Where(i => i.BuildType == x).Sum(i => i.MachineRequirement)
+                            + (x == ItemBuildType.Refining ? actualResult.Item2.RefineryRequirements.Sum(kvp => kvp.Value) : 0)
+                            + (x == ItemBuildType.ChemicalPlant ? actualResult.Item2.ChemicalPlantRequirements.Sum(kvp => kvp.Value) : 0)
+                    })
+                    .Where(x => x.Count > 0)
+                    .ToList();
+
                 DataContext = actualResult;
                 ProductionSelectionCombo.ItemsSource = actualResult.Item1;
                 ResultsListBox.ItemsSource = actualResult.Item1;
+                ItemBuildTypesListBox.ItemsSource = itemBuildTypes;
                 ResultsPanel.Visibility = Visibility.Visible;
 
                 OilRemainsListBox.ItemsSource = actualResult.Item2.RemainsPerSec;

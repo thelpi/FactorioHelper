@@ -135,6 +135,28 @@
                     <Button Margin="5, 0, 0, 0" HorizontalAlignment="Left" VerticalAlignment="Center" Content="x" Height="30" Width="30" Name="ProductionSelectRemoval" Click="ProductionSelectRemoval_Click" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
                 </StackPanel>
                 <ScrollViewer DockPanel.Dock="Bottom" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
+                    <ListView Name="ItemBuildTypesListBox">
+                        <ListView.View>
+                            <GridView AllowsColumnReorder="False">
+                                <GridViewColumn Header="Type">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Image Width="30" Height="30" Source="{Binding Path=BuildType, Converter={StaticResource buildTypeImageConverter}}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Count">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Label Content="{Binding Path=Count}" VerticalAlignment="Center" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </ScrollViewer>
+                <ScrollViewer DockPanel.Dock="Bottom" CanContentScroll="True" VerticalScrollBarVisibility="Auto">
                     <ListView Name="ResultsListBox">
                         <ListView.View>
                             <GridView AllowsColumnReorder="False">

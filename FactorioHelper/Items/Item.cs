@@ -40,25 +40,25 @@ namespace FactorioHelper.Items
             };
         }
 
-        protected Fraction GetSpeedModuleRate(ProductionService productionService)
+        protected Fraction GetSpeedModuleRate(ProductionService productionService, bool skipBonus)
         {
             var rate = productionService.StandardModulesConfiguration.ContainsKey(BuildType)
-                ? productionService.StandardModulesConfiguration[BuildType].FractionSum(_ => _.Key.GetSpeedBonus() * _.Value)
+                ? productionService.StandardModulesConfiguration[BuildType].FractionSum(_ => _.Key.GetSpeedBonus(skipBonus) * _.Value)
                 : 0;
             return rate;
         }
 
-        protected Fraction GetProductivityModuleBonus(ProductionService productionService)
+        protected Fraction GetProductivityModuleBonus(ProductionService productionService, bool skipBonus)
         {
             var rate = productionService.StandardModulesConfiguration.ContainsKey(BuildType)
-                ? productionService.StandardModulesConfiguration[BuildType].Sum(_ => _.Key.GetProductivityBonus() * _.Value)
+                ? productionService.StandardModulesConfiguration[BuildType].Sum(_ => _.Key.GetProductivityBonus(skipBonus) * _.Value)
                 : 0;
             return rate;
         }
 
         protected Fraction GetRealBuildTimeFromCustomBuildTime(Fraction buildTime, ProductionService productionService)
         {
-            var rate = GetSpeedModuleRate(productionService);
+            var rate = GetSpeedModuleRate(productionService, Id == ProductionService.SpaceSciencePackId);
             return rate >= 1
                 ? buildTime / rate
                 : buildTime * (1 - rate);
@@ -66,7 +66,7 @@ namespace FactorioHelper.Items
 
         protected Fraction GetRealBuildResultFromCustomBuildResult(Fraction buildResult, ProductionService productionService)
         {
-            return buildResult + (buildResult * GetProductivityModuleBonus(productionService));
+            return buildResult + (buildResult * GetProductivityModuleBonus(productionService, Id == ProductionService.SpaceSciencePackId));
         }
     }
 }

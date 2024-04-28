@@ -19,6 +19,7 @@ namespace FactorioHelper
         private const int AdvancedOilProcessingRecipeId = 2;
         private const int LightOilCrackingRecipeId = 4;
         private const int HeavyOilCrackingRecipeId = 5;
+        public const int SpaceSciencePackId = 55;
 
         private static readonly IReadOnlyDictionary<int, int> SolidFuelRequirements= new Dictionary<int, int>
         {
@@ -44,7 +45,7 @@ namespace FactorioHelper
             { -3, new[] { 1, 7, 12, 21 } },
             { -4, new[] { 1, 7, 12, 21, 28 } },
             { -5, new[] { 1, 7, 12, 21, 28, 33 } },
-            { -6, new[] { 1, 7, 12, 21, 28, 33, 55 } }
+            { -6, new[] { 1, 7, 12, 21, 28, 33, SpaceSciencePackId } }
         };
 
         private static readonly IReadOnlyDictionary<ItemBuildType, Func<Item, Item>> SpecificItemTypes =

@@ -62,8 +62,10 @@ namespace FactorioHelper
             return Enum.GetValues(typeof(T)).Cast<T>().ToList();
         }
 
-        public static Fraction GetSpeedBonus(this ModuleType moduleType)
+        public static Fraction GetSpeedBonus(this ModuleType moduleType, bool forceNotApply)
         {
+            if (forceNotApply) return 0;
+
             switch (moduleType)
             {
                 case ModuleType.Speed1:
@@ -83,8 +85,10 @@ namespace FactorioHelper
             }
         }
 
-        public static decimal GetProductivityBonus(this ModuleType moduleType)
+        public static decimal GetProductivityBonus(this ModuleType moduleType, bool forceNotApply)
         {
+            if (forceNotApply) return 0;
+
             switch (moduleType)
             {
                 case ModuleType.Productivity1:

@@ -147,7 +147,44 @@ namespace FactorioHelper
             return baseItems;
         }
 
-        internal void SetSolidFuelRateConsumption(Dictionary<int, Fraction> solidFuelRateConsumption)
+        internal ProductionResult ComputeProduction(Fraction solidFuelHeavyRate, Fraction solidFuelLightRate, bool advancedOilProcessing, MiningDrillType miningDrillType, int miningBonus, FurnaceType furnaceType, AssemblingType assemblingType, int crudeOilInitialYield, int itemId, Fraction targetPerSec, List<ModuleConfiguration> modulesList)
+        {
+            CrudeOilInitialYield = crudeOilInitialYield;
+            AssemblingType = assemblingType; // (AssemblingType)AssemblingTypeComboBox.SelectedItem
+            FurnaceType = furnaceType; // (FurnaceType)FurnaceTypeComboBox.SelectedItem
+            MiningDrillType = miningDrillType; // (MiningDrillType)MiningDrillTypeComboBox.SelectedItem
+            MiningBonus = miningBonus; // MiningBonusComboBox.SelectedIndex
+            AdvancedOilProcessing = advancedOilProcessing; // AdvancedRefiningCheckBox.IsChecked == true
+            SetSolidFuelRateConsumption(new Dictionary<int, Fraction>
+            {
+                { HeavyOilId, solidFuelHeavyRate },
+                { LightOilId, solidFuelLightRate },
+                { PetroleumGasId, 1 - (solidFuelLightRate + solidFuelHeavyRate) }
+            });
+
+            SetModulesConfiguration(modulesList);
+
+            var production = GetItemsToProduce(targetPerSec, itemId);
+
+            var oilProduction = GetOilToProduce(production);
+
+            var productionValues = production.Values.ToList();
+
+            var result = new ProductionResult
+            {
+                ItemsToProduce = productionValues,
+                OilProductionOutput = oilProduction
+            };
+
+            result.ItemBuildTypesCount = EnumExtensions.Values<ItemBuildType>()
+                .Select(x => (x, result.ComputeBuildTypeCount(x)))
+                .Where(x => x.Item2 > 0)
+                .ToDictionary(x => x.x, x => x.Item2);
+
+            return result;
+        }
+
+        private void SetSolidFuelRateConsumption(Dictionary<int, Fraction> solidFuelRateConsumption)
         {
             _solidFuelRateConsumption = solidFuelRateConsumption;
 
@@ -160,46 +197,6 @@ namespace FactorioHelper
                 }
             }
             _items[SolidFuelId].Composition = dic;
-        }
-
-        internal ProductionResult ComputeProduction(int itemId, Fraction targetPerSec, List<ModuleConfiguration> modulesList)
-        {
-            SetModulesConfiguration(modulesList);
-
-            var production = GetItemsToProduce(targetPerSec, itemId);
-
-            var oilProduction = GetOilToProduce(production);
-
-            var productionValues = production.Values.ToList();
-
-            var itemBuildTypes = EnumExtensions.Values<ItemBuildType>()
-                .Select(x => (x, ComputeBuildTypeCount(x, oilProduction, productionValues)))
-                .Where(x => x.Item2 > 0)
-                .ToDictionary(x => x.x, x => x.Item2);
-
-            return new ProductionResult
-            {
-                ItemBuildTypesCount = itemBuildTypes,
-                ItemsToProduce = productionValues,
-                OilProductionOutput = oilProduction
-            };
-        }
-
-        private static int ComputeBuildTypeCount(ItemBuildType x, OilProductionOutput oilProduction, List<ProductionItem> productionValues)
-        {
-            var count = productionValues.Where(i => i.BuildType == x).Sum(i => i.MachineRequirement);
-            switch (x)
-            {
-                case ItemBuildType.Refining:
-                    return count + oilProduction.RefineryRequirements.Sum(kvp => kvp.Value);
-                case ItemBuildType.ChemicalPlant:
-                    return count + oilProduction.ChemicalPlantRequirements.Sum(kvp => kvp.Value);
-                case ItemBuildType.RocketSilo:
-                    // note: the silo is used for both rocket parts and space science pack
-                    return count / 2;
-                default:
-                    return count;
-            }
         }
 
         private void SetModulesConfiguration(IReadOnlyCollection<ModuleConfiguration> modulesConfiguration)

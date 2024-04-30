@@ -4,3 +4,4 @@ Yield decrease of oild fields
 Items not included in science packs
 Conveyors and inserts requirements
 See oil dispatch
+Forbid productivity modules on non-intermediate products

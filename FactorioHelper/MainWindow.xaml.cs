@@ -58,19 +58,17 @@ namespace FactorioHelper
 
             var itemId = (ItemsComboBox.SelectedItem as BaseItem).Id;
 
-            _productionService.CrudeOilInitialYield = crudeOilInitialYield;
-            _productionService.AssemblingType = (AssemblingType)AssemblingTypeComboBox.SelectedItem;
-            _productionService.FurnaceType = (FurnaceType)FurnaceTypeComboBox.SelectedItem;
-            _productionService.MiningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
-            _productionService.MiningBonus = MiningBonusComboBox.SelectedIndex;
-            _productionService.AdvancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
-            _productionService.SetSolidFuelRateConsumption(new Dictionary<int, Fraction>
-            {
-                { ProductionService.HeavyOilId, solidFuelHeavyRate },
-                { ProductionService.LightOilId, solidFuelLightRate },
-                { ProductionService.PetroleumGasId, 1 - (solidFuelLightRate + solidFuelHeavyRate) }
-            });
             var modulesList = _modules.ToList();
+
+            var advancedOilProcessing = AdvancedRefiningCheckBox.IsChecked == true;
+
+            var miningDrillType = (MiningDrillType)MiningDrillTypeComboBox.SelectedItem;
+
+            var miningBonus = MiningBonusComboBox.SelectedIndex;
+
+            var furnaceType = (FurnaceType)FurnaceTypeComboBox.SelectedItem;
+
+            var assemblingType = (AssemblingType)AssemblingTypeComboBox.SelectedItem;
 
             Loadingbar.Visibility = Visibility.Visible;
             MainPanel.Visibility = Visibility.Hidden;
@@ -78,7 +76,7 @@ namespace FactorioHelper
             var worker = new BackgroundWorker();
             worker.DoWork += (object _, DoWorkEventArgs dwe) =>
             {
-                dwe.Result = _productionService.ComputeProduction(itemId, targetPerSec, modulesList);
+                dwe.Result = _productionService.ComputeProduction(solidFuelHeavyRate, solidFuelLightRate, advancedOilProcessing, miningDrillType, miningBonus, furnaceType, assemblingType, crudeOilInitialYield, itemId, targetPerSec, modulesList);
             };
             worker.RunWorkerCompleted += (object _, RunWorkerCompletedEventArgs rwce) =>
             {

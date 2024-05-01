@@ -82,6 +82,8 @@ namespace FactorioHelper
             {
                 var actualResult = (ProductionResult)rwce.Result;
 
+                DataContext = actualResult;
+
                 ProductionSelectionCombo.ItemsSource = actualResult.ItemsToProduce;
                 ResultsListBox.ItemsSource = actualResult.ItemsToProduce;
                 ItemBuildTypesListBox.ItemsSource = actualResult.ItemBuildTypesCount;
@@ -201,18 +203,18 @@ namespace FactorioHelper
         {
             if (ProductionSelectionCombo.SelectedItem is ProductionItem pItem)
             {
-                var data = DataContext as Tuple<IEnumerable<ProductionItem>, OilProductionOutput>;
+                var data = (ProductionResult)DataContext;
 
-                ResultsListBox.ItemsSource = data.Item1.Where(x => x.Id == pItem.Id || x.Components.Any(_ => _.Id == pItem.Id));
+                ResultsListBox.ItemsSource = data.ItemsToProduce.Where(x => x.Id == pItem.Id || x.Components.Any(_ => _.Id == pItem.Id));
             }
         }
 
         private void ProductionSelectRemoval_Click(object sender, RoutedEventArgs e)
         {
-            var data = DataContext as Tuple<IEnumerable<ProductionItem>, OilProductionOutput>;
+            var data = (ProductionResult)DataContext;
 
             ProductionSelectionCombo.SelectedItem = null;
-            ResultsListBox.ItemsSource = data.Item1;
+            ResultsListBox.ItemsSource = data.ItemsToProduce;
         }
     }
 }
